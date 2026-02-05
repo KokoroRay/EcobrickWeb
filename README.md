@@ -1,16 +1,65 @@
-# React + Vite
+# Ecobrick Web (React + TypeScript)
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Website giới thiệu sản phẩm gạch tái chế và hệ thống tích điểm đổi ưu đãi. Giao diện được chuyển đổi từ bộ HTML gốc sang React + TypeScript, tối ưu cho việc tích hợp backend AWS (Cognito + API Gateway + Lambda) theo [ecobrich/template.yaml](../ecobrich/template.yaml).
 
-Currently, two official plugins are available:
+## Tính năng chính
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- Trang giới thiệu, sản phẩm, quy trình, liên hệ.
+- Đăng nhập / đăng ký (UI chuẩn bị cho Cognito).
+- Điểm thưởng: quy đổi kg nhựa → điểm, lịch sử tích điểm.
+- Đổi điểm lấy voucher, quản lý voucher đã nhận.
+- Dashboard admin: chỉnh quy đổi điểm, quản lý voucher, thống kê nhựa.
 
-## React Compiler
+## Cấu trúc môi trường
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+Tạo file `.env` dựa trên `.env.example`:
 
-## Expanding the ESLint configuration
+```
+VITE_API_BASE_URL=
+VITE_AWS_REGION=
+VITE_COGNITO_USER_POOL_ID=
+VITE_COGNITO_CLIENT_ID=
+```
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+Các biến này sẽ lấy từ output của CloudFormation/SAM trong backend:
+
+- `ApiEndpoint`
+- `UserPoolId`
+- `UserPoolClientId`
+- `Region`
+
+## Chạy dự án
+
+```
+npm install
+npm run dev
+```
+
+## Build
+
+```
+npm run build
+npm run preview
+```
+
+## Deploy AWS (gợi ý)
+
+### Backend (SAM)
+
+```
+cd ../ecobrich
+sam build
+sam deploy --guided
+```
+
+### Frontend (S3 + CloudFront)
+
+1. Tạo S3 bucket và bật Static Website Hosting.
+2. Build frontend (`npm run build`).
+3. Upload thư mục `dist/` lên bucket.
+4. (Tuỳ chọn) Tạo CloudFront distribution trỏ đến bucket.
+5. Cập nhật CORS của API Gateway (đã mở trong template) khi có domain chính thức.
+
+## Tích hợp API
+
+Các hàm gọi API được chuẩn bị tại [src/services/api.ts](src/services/api.ts). Khi backend sẵn sàng, chỉ cần cập nhật `.env` để kết nối thật.
