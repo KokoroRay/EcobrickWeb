@@ -19,7 +19,9 @@ on:
       - '.github/workflows/**'
 
 permissions:
-  contents: write # Cần thiết để deploy lên GitHub Pages
+  contents: read
+  pages: write
+  id-token: write
 
 jobs:
   # --- JOB 1: DEPLOY BACKEND (AWS SAM) ---
@@ -69,6 +71,8 @@ jobs:
   deploy-frontend:
     if: github.ref_name == 'main' || startsWith(github.ref, 'refs/heads/feature/')
     runs-on: ubuntu-latest
+    environment:
+      name: github-pages
     steps:
       - uses: actions/checkout@v4
 
@@ -89,8 +93,10 @@ jobs:
           VITE_COGNITO_CLIENT_ID: ${{ secrets.VITE_COGNITO_CLIENT_ID }}
         run: npm run build
 
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./dist
+          path: ./dist
+
+      - name: Deploy to GitHub Pages
+        uses: actions/deploy-pages@v4
