@@ -35,7 +35,7 @@ jobs:
         run: |
           rm -rf .aws-sam
           sam build
-          # Tách biệt stack để không đè dữ liệu
+          # Tự động chọn tên stack để không đè dữ liệu giữa dev và main
           STACK_NAME=${{ github.ref_name == 'dev' && 'ecobrich-dev-stack' || 'ecobrich-stack' }}
           sam deploy --stack-name $STACK_NAME \
             --capabilities CAPABILITY_IAM --resolve-s3 \
@@ -51,12 +51,10 @@ jobs:
           node-version: 20
           cache: 'npm'
       - run: npm ci
-      - name: Build & Deploy
+      - name: Build
         env:
           VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
-        run: |
-          npm run build
-          ls -R dist # Debug danh sách file
+        run: npm run build
       - uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}

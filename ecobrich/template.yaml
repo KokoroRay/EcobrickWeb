@@ -13,7 +13,10 @@ Globals:
       Variables:
         TABLE_NAME: !Ref PlasticDbTable
 
-Resources: # Dòng này phải sát lề trái
+Resources:
+  # ------------------------------------------------------------------
+  # 1. DYNAMODB TABLE
+  # ------------------------------------------------------------------
   PlasticDbTable:
     Type: AWS::DynamoDB::Table
     Properties:
@@ -29,6 +32,37 @@ Resources: # Dòng này phải sát lề trái
           KeyType: RANGE
       BillingMode: PAY_PER_REQUEST
 
+  # ------------------------------------------------------------------
+  # 2. COGNITO USER POOL
+  # ------------------------------------------------------------------
+  PlasticUserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName: PlasticUserPool
+      AutoVerifiedAttributes:
+        - email
+      UsernameAttributes:
+        - email
+      Policies:
+        PasswordPolicy:
+          MinimumLength: 8
+          RequireLowercase: true
+          RequireNumbers: true
+          RequireUppercase: true
+
+  PlasticUserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      ClientName: PlasticReactClient
+      UserPoolId: !Ref PlasticUserPool
+      GenerateSecret: false
+      ExplicitAuthFlows:
+        - ALLOW_USER_SRP_AUTH
+        - ALLOW_REFRESH_TOKEN_AUTH
+
+  # ------------------------------------------------------------------
+  # 3. API GATEWAY
+  # ------------------------------------------------------------------
   PlasticApi:
     Type: AWS::Serverless::Api
     Properties:
@@ -37,11 +71,19 @@ Resources: # Dòng này phải sát lề trái
         AllowMethods: "'GET,POST,OPTIONS'"
         AllowHeaders: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
         AllowOrigin: "'*'"
+      Auth:
+        DefaultAuthorizer: CognitoAuthorizer
+        Authorizers:
+          CognitoAuthorizer:
+            UserPoolArn: !GetAtt PlasticUserPool.Arn
 
+  # ------------------------------------------------------------------
+  # 4. LAMBDA FUNCTIONS
+  # ------------------------------------------------------------------
   DonateFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: . # Trỏ về gốc để thấy go.mod
+      CodeUri: . 
       Handler: bootstrap
       Policies:
         - DynamoDBCrudPolicy:
@@ -55,3 +97,12 @@ Resources: # Dòng này phải sát lề trái
             Method: POST
     Metadata:
       BuildMethod: makefile
+
+Outputs:
+  ApiEndpoint:
+    Description: "API Gateway endpoint URL"
+    Value: !Sub "https://${PlasticApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/"
+  UserPoolId:
+    Value: !Ref PlasticUserPool
+  UserPoolClientId:
+    Value: !Ref PlasticUserPoolClient
