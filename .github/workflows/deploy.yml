@@ -50,12 +50,16 @@ jobs:
         with:
           node-version: 20
           cache: 'npm'
+          cache-dependency-path: ecobrickweb/package-lock.json
       - run: npm ci
+        working-directory: ./ecobrickweb
       - name: Build
+        working-directory: ./ecobrickweb
         env:
           VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
+          VITE_BASE_PATH: /EcobrickWeb/
         run: npm run build
       - uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./dist
+          publish_dir: ./ecobrickweb/dist
