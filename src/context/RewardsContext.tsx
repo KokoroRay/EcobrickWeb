@@ -150,6 +150,7 @@ export function RewardsProvider({ children }: { children: ReactNode }) {
   return <RewardsContext.Provider value={value}>{children}</RewardsContext.Provider>;
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useRewards() {
   const context = useContext(RewardsContext);
   if (!context) {

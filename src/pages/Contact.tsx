@@ -1,7 +1,7 @@
 export default function Contact() {
   return (
-    <section className="page content">
-      <div className="section pad">
+    <div className="page content">
+      <section className="section pad">
         <div className="container contact-grid">
           <div className="contact-left">
             <h1 style={{ fontSize: '2rem', color: '#20803F', marginBottom: '1rem' }}>ECOBRICK</h1>
@@ -34,7 +34,7 @@ export default function Contact() {
             </form>
           </div>
         </div>
-      </div>
-    </section>
+      </section>
+    </div>
   );
 }

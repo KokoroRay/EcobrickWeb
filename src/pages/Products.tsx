@@ -3,8 +3,9 @@ import { products } from '../data/products';
 
 export default function Products() {
   return (
-    <section className="page content">
-      <div className="section pad">
+    <div className="page content">
+      <section className="section pad">
+        <div className="container">
         <h2 className="section-title">SẢN PHẨM</h2>
         <p className="section-sub">Toàn bộ sản phẩm gạch tái chế</p>
 

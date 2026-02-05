@@ -2,8 +2,10 @@ import { processSteps } from '../data/process';
 
 export default function Process() {
   return (
-    <section className="page content process-page">
-      <div className="process-section">
+    <div className="page content">
+      <section className="process-page">
+        <div className="container">
+          <div className="process-section">
         <h1 className="process-title">QUY TRÌNH SẢN XUẤT</h1>
         <p className="process-subtitle">
           Từ rác thải nhựa đến vật liệu xây dựng bền vững – Hành trình tái chế xanh của Ecobrick
@@ -22,8 +24,10 @@ export default function Process() {
               </div>
             </article>
           ))}
+          </div>
         </div>
-      </div>
-    </section>
+        </div>
+      </section>
+    </div>
   );
 }

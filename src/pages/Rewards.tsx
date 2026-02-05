@@ -16,8 +16,9 @@ export default function Rewards() {
   };
 
   return (
-    <section className="page content">
-      <div className="section pad">
+    <div className="page content">
+      <section className="section pad">
+        <div className="container">
         <div className="rewards-hero">
           <h1>Điểm thưởng Ecobrick</h1>
           <p>Quy đổi nhựa tái chế thành điểm thưởng để đổi voucher ưu đãi.</p>
@@ -89,7 +90,8 @@ export default function Rewards() {
             </div>
           </div>
         </div>
-      </div>
-    </section>
+        </div>
+      </section>
+    </div>
   );
 }

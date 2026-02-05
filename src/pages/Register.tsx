@@ -2,8 +2,10 @@ import { Link } from 'react-router-dom';
 
 export default function Register() {
   return (
-    <section className="page content">
-      <div className="signup-page">
+    <div className="page content">
+      <section className="auth-section">
+        <div className="container">
+          <div className="signup-page">
         <div className="signup-container">
           <h2 className="signup-title">Tạo tài khoản</h2>
           <p className="signup-note">Đăng ký nhanh để nhận điểm thưởng</p>
@@ -88,8 +90,9 @@ export default function Register() {
               <p className="signup-desc">Đã có tài khoản? <Link to="/login">Đăng nhập ngay</Link></p>
             </div>
           </form>
+          </div>
         </div>
-      </div>
-    </section>
+      </section>
+    </div>
   );
 }

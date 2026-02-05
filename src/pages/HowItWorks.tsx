@@ -2,8 +2,9 @@ import { Link } from 'react-router-dom';
 
 export default function HowItWorks() {
   return (
-    <section className="page content">
-      <div className="section pad">
+    <div className="page content">
+      <section className="section pad">
+        <div className="container">
         <h2 className="section-title">CÁCH THỨC HOẠT ĐỘNG</h2>
         <p className="section-sub">
           Hệ thống tích điểm đổi ưu đãi giúp khuyến khích thu gom nhựa và xây dựng cộng đồng xanh.
@@ -64,7 +65,8 @@ export default function HowItWorks() {
             </div>
           </div>
         </div>
-      </div>
-    </section>
+        </div>
+      </section>
+    </div>
   );
 }

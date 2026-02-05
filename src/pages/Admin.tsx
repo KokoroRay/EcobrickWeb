@@ -31,8 +31,9 @@ export default function Admin() {
   };
 
   return (
-    <section className="page content">
-      <div className="section pad">
+    <div className="page content">
+      <section className="section pad">
+        <div className="container">
         <h2 className="section-title">BẢNG ĐIỀU KHIỂN ADMIN</h2>
         <p className="section-sub">Quản lý người dùng, quy đổi điểm và voucher ưu đãi.</p>
 
@@ -136,7 +137,8 @@ export default function Admin() {
             </tbody>
           </table>
         </div>
-      </div>
-    </section>
+        </div>
+      </section>
+    </div>
   );
 }

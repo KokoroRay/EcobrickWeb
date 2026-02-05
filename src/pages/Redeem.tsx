@@ -13,8 +13,9 @@ export default function Redeem() {
   };
 
   return (
-    <section className="page content">
-      <div className="section pad">
+    <div className="page content">
+      <section className="section pad">
+        <div className="container">
         <h2 className="section-title">ĐỔI ĐIỂM LẤY VOUCHER</h2>
         <p className="section-sub">Điểm hiện có: <strong>{points}</strong></p>
 
@@ -36,7 +37,8 @@ export default function Redeem() {
             </div>
           ))}
         </div>
-      </div>
-    </section>
+        </div>
+      </section>
+    </div>
   );
 }

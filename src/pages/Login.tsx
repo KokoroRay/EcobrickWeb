@@ -2,8 +2,10 @@ import { Link } from 'react-router-dom';
 
 export default function Login() {
   return (
-    <section className="page content">
-      <div className="login-page">
+    <div className="page content">
+      <section className="auth-section">
+        <div className="container">
+          <div className="login-page">
         <div className="login-container">
           <h2 className="login-title">Đăng nhập</h2>
           <p className="login-desc">Đăng nhập để theo dõi điểm thưởng và đổi ưu đãi</p>
@@ -42,8 +44,9 @@ export default function Login() {
               Tạo tài khoản mới
             </Link>
           </div>
+          </div>
         </div>
-      </div>
-    </section>
+      </section>
+    </div>
   );
 }

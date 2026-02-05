@@ -13,15 +13,17 @@ export default function ProductDetail() {
 
   if (!product) {
     return (
-      <section className="page content">
-        <div className="section pad center">
+      <div className="page content">
+        <section className="section pad">
+          <div className="container center">
           <h2 className="section-title">Không tìm thấy sản phẩm</h2>
           <p className="section-sub">Vui lòng quay lại danh sách sản phẩm.</p>
           <Link to="/products" className="btn primary">
             Quay lại sản phẩm
           </Link>
-        </div>
-      </section>
+          </div>
+        </section>
+      </div>
     );
   }
 
@@ -35,8 +37,10 @@ export default function ProductDetail() {
   };
 
   return (
-    <section className="page content product-page">
-      <div className="product-container">
+    <div className="page content">
+      <section className="product-page">
+        <div className="container">
+          <div className="product-container">
         <div className="product-gallery">
           <div className="main-image">
             <img id="mainProductImage" src={mainImage} alt={product.name} />
@@ -95,6 +99,8 @@ export default function ProductDetail() {
             ))}
         </div>
       </section>
-    </section>
+        </div>
+      </section>
+    </div>
   );
 }

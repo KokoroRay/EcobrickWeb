@@ -4,8 +4,9 @@ export default function Vouchers() {
   const { claimedVouchers, availableVouchers } = useRewards();
 
   return (
-    <section className="page content">
-      <div className="section pad">
+    <div className="page content">
+      <section className="section pad">
+        <div className="container">
         <h2 className="section-title">VOUCHER CỦA BẠN</h2>
         <p className="section-sub">Voucher đã đổi và đang sẵn sàng sử dụng.</p>
 
@@ -38,7 +39,8 @@ export default function Vouchers() {
             </div>
           ))}
         </div>
-      </div>
-    </section>
+        </div>
+      </section>
+    </div>
   );
 }

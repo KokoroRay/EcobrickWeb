@@ -1,6 +1,6 @@
 export default function About() {
   return (
-    <section className="page content">
+    <div className="page content">
       <section className="about-section">
         <div className="about-container">
           <div className="about-text slide-left">
@@ -52,6 +52,6 @@ export default function About() {
           </div>
         </div>
       </section>
-    </section>
+    </div>
   );
 }

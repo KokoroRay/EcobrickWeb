@@ -3,7 +3,7 @@ import { products } from '../data/products';
 
 export default function Home() {
   return (
-    <section className="page content">
+    <div className="page content">
       <section className="hero">
         <div className="hero-left">
           <h1>
@@ -25,10 +25,11 @@ export default function Home() {
       </section>
 
       <section className="section pad">
-        <h2 className="section-title">ECOBRICK CÓ GÌ?</h2>
-        <p className="section-sub">Những mẫu gạch tái chế nổi bật của chúng tôi</p>
+        <div className="container">
+          <h2 className="section-title">ECOBRICK CÓ GÌ?</h2>
+          <p className="section-sub">Những mẫu gạch tái chế nổi bật của chúng tôi</p>
 
-        <div className="product-list">
+          <div className="product-list">
           {products.map((product) => (
             <article className="card product-card" key={product.id}>
               <img src={product.images[0]} alt={product.name} />
@@ -51,8 +52,9 @@ export default function Home() {
       </section>
 
       <section className="section pad">
-        <h2 className="section-title">QUY TRÌNH SẢN XUẤT</h2>
-        <div className="process-grid">
+        <div className="container">
+          <h2 className="section-title">QUY TRÌNH SẢN XUẤT</h2>
+          <div className="process-grid">
           <div className="process-card" style={{ background: '#1565C0' }}>
             <div className="icon">🗑️</div>
             <h3>Thu gom nhựa</h3>
@@ -74,9 +76,11 @@ export default function Home() {
             <p>Gia công, hoàn thiện bề mặt và lắp đặt làm gạch lát cho công trình xanh.</p>
           </div>
         </div>
+        </div>
       </section>
 
       <section className="section pad section-light">
+        <div className="container">
         <h2 className="section-title">TÁC ĐỘNG & LỢI ÍCH</h2>
         <p className="section-sub">Giảm rác thải nhựa, tạo việc làm và nâng cao cảnh quan đô thị</p>
 
@@ -95,9 +99,11 @@ export default function Home() {
             <div className="icon">🤝</div>
             <h4>Tạo việc làm</h4>
             <p>Tạo chuỗi giá trị và cơ hội việc làm cho cộng đồng.</p>
+            </div>
           </div>
         </div>
+        </div>
       </section>
-    </section>
+    </div>
   );
 }
