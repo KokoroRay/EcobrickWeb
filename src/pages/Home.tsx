@@ -45,9 +45,10 @@ export default function Home() {
         </div>
 
         <div className="center">
-          <Link className="link" to="/products" id="view-all">
+          <Link className="link" to="/products">
             Xem tất cả sản phẩm
           </Link>
+        </div>
         </div>
       </section>
 
@@ -101,7 +102,6 @@ export default function Home() {
             <p>Tạo chuỗi giá trị và cơ hội việc làm cho cộng đồng.</p>
             </div>
           </div>
-        </div>
         </div>
       </section>
     </div>

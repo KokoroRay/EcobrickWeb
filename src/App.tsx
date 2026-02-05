@@ -18,28 +18,33 @@ import { RewardsProvider } from './context/RewardsContext';
 
 export default function App() {
   return (
-    <RewardsProvider>
-      <div className="app">
-        <Header />
-        <main className="main">
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/about" element={<About />} />
-            <Route path="/products" element={<Products />} />
-            <Route path="/products/:slug" element={<ProductDetail />} />
-            <Route path="/process" element={<Process />} />
-            <Route path="/contact" element={<Contact />} />
-            <Route path="/how-it-works" element={<HowItWorks />} />
-            <Route path="/rewards" element={<Rewards />} />
-            <Route path="/redeem" element={<Redeem />} />
-            <Route path="/vouchers" element={<Vouchers />} />
-            <Route path="/admin" element={<Admin />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
-          </Routes>
-        </main>
-        <Footer />
+    <div style={{ background: '#ffffff', minHeight: '100vh', padding: '20px' }}>
+      <div style={{ background: '#ff0000', color: '#fff', padding: '30px', fontSize: '24px', fontWeight: 'bold' }}>
+        🔴 DEBUG: Nếu thấy dòng này, React đang chạy!
       </div>
-    </RewardsProvider>
+      <RewardsProvider>
+        <div className="app">
+          <Header />
+          <main className="main">
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/about" element={<About />} />
+              <Route path="/products" element={<Products />} />
+              <Route path="/products/:slug" element={<ProductDetail />} />
+              <Route path="/process" element={<Process />} />
+              <Route path="/contact" element={<Contact />} />
+              <Route path="/how-it-works" element={<HowItWorks />} />
+              <Route path="/rewards" element={<Rewards />} />
+              <Route path="/redeem" element={<Redeem />} />
+              <Route path="/vouchers" element={<Vouchers />} />
+              <Route path="/admin" element={<Admin />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
+            </Routes>
+          </main>
+          <Footer />
+        </div>
+      </RewardsProvider>
+    </div>
   );
 }

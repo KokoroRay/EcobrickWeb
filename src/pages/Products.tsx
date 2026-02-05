@@ -23,7 +23,8 @@ export default function Products() {
             </article>
           ))}
         </div>
-      </div>
-    </section>
+        </div>
+      </section>
+    </div>
   );
 }

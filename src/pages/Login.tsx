@@ -5,8 +5,7 @@ export default function Login() {
     <div className="page content">
       <section className="auth-section">
         <div className="container">
-          <div className="login-page">
-        <div className="login-container">
+          <div className="login-container">
           <h2 className="login-title">Đăng nhập</h2>
           <p className="login-desc">Đăng nhập để theo dõi điểm thưởng và đổi ưu đãi</p>
 
@@ -42,9 +41,9 @@ export default function Login() {
             <p className="signup-desc">Tạo tài khoản để bắt đầu tích điểm đổi ưu đãi.</p>
             <Link to="/register" className="btn-signup secondary">
               Tạo tài khoản mới
-            </Link>
+              </Link>
           </div>
-          </div>
+        </div>
         </div>
       </section>
     </div>

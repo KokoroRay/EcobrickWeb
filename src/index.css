@@ -187,9 +187,17 @@ body {
 .main { margin-top: 90px; flex: 1; }
 .page { display: block; }
 
-.hero { display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; padding: 4rem 0; align-items: center; background: rgba(128, 176, 63, 0.05); }
+.hero { 
+  display: grid; 
+  grid-template-columns: 1fr 1fr; 
+  gap: 4rem; 
+  padding: 4rem 2rem; 
+  align-items: center; 
+  background: rgba(128, 176, 63, 0.05);
+  max-width: 1400px;
+  margin: 0 auto;
+}
 .hero-left {
-  padding-left: 4rem;
   padding-right: 2rem;
 }
 .hero-left h1 {
