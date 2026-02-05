@@ -89,7 +89,7 @@ Resources:
   DonateFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: donate/
+      CodeUri: .
       Handler: bootstrap # Go mới dùng handler tên bootstrap
       Policies:
         - DynamoDBCrudPolicy:
