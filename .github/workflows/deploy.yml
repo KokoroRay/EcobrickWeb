@@ -2,14 +2,29 @@ name: Deploy Ecobrich (Frontend & Backend)
 
 on:
   push:
-    branches: [ main ] # Hoặc branch chính của bạn
+    branches: 
+      - main
+      - 'feature/**'
+      - dev
+    paths:
+      # Job Backend sẽ được kích hoạt nếu có thay đổi ở đây
+      - 'ecobrich/**'
+      # Job Frontend sẽ được kích hoạt nếu có thay đổi ở đây
+      - 'src/**'
+      - 'public/**'
+      - 'package.json'
+      - 'vite.config.ts'
+      # Luôn chạy nếu sửa file CI/CD
+      - '.github/workflows/**'
 
 permissions:
   contents: write # Cần thiết để deploy lên GitHub Pages
 
 jobs:
   # --- JOB 1: DEPLOY BACKEND (AWS SAM) ---
+  # Điều kiện: Chạy trên nhánh main HOẶC nhánh dev
   deploy-backend:
+    if: github.ref_name == 'main' || github.ref_name == 'dev'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -17,7 +32,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.21' # Khớp với version trong go.mod
+          go-version: '1.21'
 
       - name: Setup AWS SAM CLI
         uses: aws-actions/setup-sam@v2
@@ -49,7 +64,9 @@ jobs:
             --no-fail-on-empty-changeset
             
   # --- JOB 2: DEPLOY FRONTEND (REACT TS) ---
+  # Điều kiện: Chạy trên nhánh main HOẶC các nhánh feature/**
   deploy-frontend:
+    if: github.ref_name == 'main' || startsWith(github.ref, 'refs/heads/feature/')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -65,11 +82,13 @@ jobs:
         run: npm ci
 
       - name: Build project
+        env:
+          VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
+          VITE_COGNITO_USER_POOL_ID: ${{ secrets.VITE_COGNITO_USER_POOL_ID }}
         run: npm run build
-        # Lưu ý: Đảm bảo base path trong vite.config.ts đã đúng với tên repo
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./dist # Thư mục sau khi build của Vite
+          publish_dir: ./dist

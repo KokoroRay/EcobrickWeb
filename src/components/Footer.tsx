@@ -3,7 +3,11 @@ export default function Footer() {
     <footer className="footer">
       <div className="footer-container">
         <div className="footer-about">
-          <img src="/Logo%20EB%20tr%E1%BA%AFng.png" alt="Ecobrick Logo" className="footer-logo" />
+          <img
+            src={`${import.meta.env.BASE_URL}Logo%20EB%20tr%E1%BA%AFng.png`}
+            alt="Ecobrick Logo"
+            className="footer-logo"
+          />
         </div>
 
         <div className="footer-links">
