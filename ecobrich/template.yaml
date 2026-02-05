@@ -103,25 +103,26 @@ Resources:
             Method: POST
     Metadata:
       BuildMethod: makefile
+      ContextPath: .
 
-  # Function 2: Lấy thông tin user & lịch sử (Profile)
-  ProfileFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      CodeUri: profile/
-      Handler: bootstrap
-      Policies:
-        - DynamoDBReadPolicy:
-            TableName: !Ref PlasticDbTable
-      Events:
-        GetProfileApi:
-          Type: Api
-          Properties:
-            RestApiId: !Ref PlasticApi
-            Path: /profile
-            Method: GET
-    Metadata:
-      BuildMethod: makefile
+  # # Function 2: Lấy thông tin user & lịch sử (Profile)
+  # ProfileFunction:
+  #   Type: AWS::Serverless::Function
+  #   Properties:
+  #     CodeUri: profile/
+  #     Handler: bootstrap
+  #     Policies:
+  #       - DynamoDBReadPolicy:
+  #           TableName: !Ref PlasticDbTable
+  #     Events:
+  #       GetProfileApi:
+  #         Type: Api
+  #         Properties:
+  #           RestApiId: !Ref PlasticApi
+  #           Path: /profile
+  #           Method: GET
+  #   Metadata:
+  #     BuildMethod: makefile
 
 Outputs:
   ApiEndpoint:
