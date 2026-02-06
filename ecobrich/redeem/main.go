@@ -39,7 +39,7 @@ func handleRequest(ctx context.Context, request events.APIGatewayProxyRequest) (
 		"Access-Control-Allow-Headers": "Content-Type,Authorization",
 	}
 
-	if request.HttpMethod == "OPTIONS" {
+	if request.HTTPMethod == "OPTIONS" {
 		return events.APIGatewayProxyResponse{StatusCode: 200, Headers: headers}, nil
 	}
 
