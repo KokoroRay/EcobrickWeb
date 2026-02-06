@@ -2,6 +2,7 @@ import { NavLink, Link, useNavigate } from 'react-router-dom';
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { getAssetPath } from '../utils/assets';
+import { useCart } from '../context/CartContext';
 
 const navLinkClass = ({ isActive }: { isActive: boolean }) =>
   `navbar-link${isActive ? ' active' : ''}`;
@@ -10,6 +11,7 @@ export default function Header() {
   const [query, setQuery] = useState('');
   const [showDropdown, setShowDropdown] = useState(false);
   const { isAuthenticated, user, userAttributes, logout, role } = useAuth();
+  const { cartCount } = useCart();
   const dropdownRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
@@ -127,6 +129,33 @@ export default function Header() {
                 </button>
               </div>
             </li>
+
+            {/* Cart Icon */}
+            <li>
+              <Link to="/cart" className="nav-action-btn" style={{ position: 'relative', border: 'none', padding: '0.6rem' }}>
+                <i className="fa-solid fa-cart-shopping" style={{ fontSize: '1.2rem' }}></i>
+                {cartCount > 0 && (
+                  <span style={{
+                    position: 'absolute',
+                    top: '-5px',
+                    right: '-5px',
+                    background: '#ef4444',
+                    color: 'white',
+                    borderRadius: '50%',
+                    width: '20px',
+                    height: '20px',
+                    fontSize: '0.75rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontWeight: 700
+                  }}>
+                    {cartCount}
+                  </span>
+                )}
+              </Link>
+            </li>
+
             <li>
               {isAuthenticated ? (
                 <div className="user-menu" ref={dropdownRef}>
@@ -158,26 +187,27 @@ export default function Header() {
                         {role === 'admin' && (
                           <li>
                             <Link to="/admin" onClick={() => setShowDropdown(false)}>
-                              <i className="fa-solid fa-user-shield"></i>
                               <span>Trang quản trị</span>
                             </Link>
                           </li>
                         )}
                         <li>
                           <Link to="/rewards" onClick={() => setShowDropdown(false)}>
-                            <i className="fa-solid fa-gift"></i>
                             <span>Điểm thưởng</span>
                           </Link>
                         </li>
                         <li>
+                          <Link to="/history" onClick={() => setShowDropdown(false)}>
+                            <span>Lịch sử hoạt động</span>
+                          </Link>
+                        </li>
+                        <li>
                           <Link to="/vouchers" onClick={() => setShowDropdown(false)}>
-                            <i className="fa-solid fa-ticket"></i>
                             <span>Voucher của tôi</span>
                           </Link>
                         </li>
                         <li>
                           <Link to="/redeem" onClick={() => setShowDropdown(false)}>
-                            <i className="fa-solid fa-trophy"></i>
                             <span>Đổi quà</span>
                           </Link>
                         </li>
@@ -186,7 +216,6 @@ export default function Header() {
                       <div className="user-dropdown-divider"></div>
 
                       <button className="user-dropdown-logout" onClick={handleLogout}>
-                        <i className="fa-solid fa-right-from-bracket"></i>
                         <span>Đăng xuất</span>
                       </button>
                     </div>

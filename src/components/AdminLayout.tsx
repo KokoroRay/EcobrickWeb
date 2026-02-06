@@ -13,6 +13,7 @@ export default function AdminLayout({ children, activeTab, onTabChange }: AdminL
         { id: 'overview', icon: 'fa-chart-pie', label: 'Tổng quan' },
         { id: 'orders', icon: 'fa-box-open', label: 'Quản lý Đơn' },
         { id: 'users', icon: 'fa-users', label: 'Người dùng' },
+        { id: 'products', icon: 'fa-box', label: 'Sản phẩm' },
         { id: 'vouchers', icon: 'fa-ticket', label: 'Voucher & Cấu hình' },
     ];
 

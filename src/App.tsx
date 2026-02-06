@@ -1,4 +1,4 @@
-import { Route, Routes } from 'react-router-dom';
+import { Route, Routes, useLocation } from 'react-router-dom';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -18,9 +18,13 @@ import Redeem from './pages/Redeem';
 import Vouchers from './pages/Vouchers';
 import Admin from './pages/Admin';
 import TestRole from './pages/TestRole';
+import Cart from './pages/Cart';
+import History from './pages/History';
 import { RewardsProvider } from './context/RewardsContext';
 import { AuthProvider } from './context/AuthContext';
 import { ToastProvider } from './context/ToastContext';
+import { CartProvider } from './context/CartContext';
+import { ProductProvider } from './context/ProductContext';
 import { Amplify } from 'aws-amplify';
 import '@aws-amplify/ui-react/styles.css';
 
@@ -51,9 +55,6 @@ Amplify.configure({
   }
 });
 
-// ... imports
-import { useLocation } from 'react-router-dom';
-
 export default function App() {
   const location = useLocation();
   const isAdminRoute = location.pathname.startsWith('/admin');
@@ -61,37 +62,43 @@ export default function App() {
   return (
     <AuthProvider>
       <ToastProvider>
-        <RewardsProvider>
-          <div className="app">
-            {!isAdminRoute && <Header />}
-            <main className={isAdminRoute ? '' : 'main'}>
-              <Routes>
-                <Route path="/" element={<Home />} />
-                <Route path="/about" element={<About />} />
-                <Route path="/products" element={<Products />} />
-                <Route path="/products/:slug" element={<ProductDetail />} />
-                <Route path="/process" element={<Process />} />
-                <Route path="/contact" element={<Contact />} />
-                <Route path="/how-it-works" element={<HowItWorks />} />
-                <Route path="/login" element={<Login />} />
-                <Route path="/register" element={<Register />} />
-                <Route path="/forgot-password" element={<ForgotPassword />} />
+        <ProductProvider>
+          <RewardsProvider>
+            <CartProvider>
+              <div className="app">
+                {!isAdminRoute && <Header />}
+                <main className={isAdminRoute ? '' : 'main'}>
+                  <Routes>
+                    <Route path="/" element={<Home />} />
+                    <Route path="/about" element={<About />} />
+                    <Route path="/products" element={<Products />} />
+                    <Route path="/products/:slug" element={<ProductDetail />} />
+                    <Route path="/process" element={<Process />} />
+                    <Route path="/contact" element={<Contact />} />
+                    <Route path="/how-it-works" element={<HowItWorks />} />
+                    <Route path="/login" element={<Login />} />
+                    <Route path="/register" element={<Register />} />
+                    <Route path="/forgot-password" element={<ForgotPassword />} />
+                    <Route path="/cart" element={<Cart />} />
 
-                {/* Test Role - Kiểm tra role & token */}
-                <Route path="/test-role" element={<ProtectedRoute><TestRole /></ProtectedRoute>} />
+                    {/* Test Role */}
+                    <Route path="/test-role" element={<ProtectedRoute><TestRole /></ProtectedRoute>} />
 
-                {/* Protected Routes - Yêu cầu đăng nhập */}
-                <Route path="/rewards" element={<ProtectedRoute><Rewards /></ProtectedRoute>} />
-                <Route path="/redeem" element={<ProtectedRoute><Redeem /></ProtectedRoute>} />
-                <Route path="/vouchers" element={<ProtectedRoute><Vouchers /></ProtectedRoute>} />
+                    {/* Protected Routes */}
+                    <Route path="/rewards" element={<ProtectedRoute><Rewards /></ProtectedRoute>} />
+                    <Route path="/redeem" element={<ProtectedRoute><Redeem /></ProtectedRoute>} />
+                    <Route path="/vouchers" element={<ProtectedRoute><Vouchers /></ProtectedRoute>} />
+                    <Route path="/history" element={<ProtectedRoute><History /></ProtectedRoute>} />
 
-                {/* Admin Routes - Yêu cầu đăng nhập + role admin */}
-                <Route path="/admin" element={<AdminRoute><Admin /></AdminRoute>} />
-              </Routes>
-            </main>
-            {!isAdminRoute && <Footer />}
-          </div>
-        </RewardsProvider>
+                    {/* Admin Routes */}
+                    <Route path="/admin" element={<AdminRoute><Admin /></AdminRoute>} />
+                  </Routes>
+                </main>
+                {!isAdminRoute && <Footer />}
+              </div>
+            </CartProvider>
+          </RewardsProvider>
+        </ProductProvider>
       </ToastProvider>
     </AuthProvider>
   );
