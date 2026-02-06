@@ -70,30 +70,21 @@ const ProductContext = createContext<ProductContextType | undefined>(undefined);
 
 export function ProductProvider({ children }: { children: ReactNode }) {
     const [products, setProducts] = useState<Product[]>(() => {
-        // Attempt to load from localStorage, but merge with initial if empty/stale? 
-        // actually just prefer local storage if exists, else initial.
-        // BUT we need to fix images for existing users (like me refreshing).
-        // So let's force use initialProducts if the stored ones have "assets/..." paths 
-        // or just reset for this dev session. 
-        // Reliable way: Check if local storage has data.
+        // Force refresh from initialProducts to ensure image paths are up to date for this deployment
+        // (Bypassing localStorage check for now to fix user's report without clearing cache manually)
+        return initialProducts;
+        /* 
         const stored = localStorage.getItem('ecobrick_products');
         if (stored) {
             try {
                 const parsed = JSON.parse(stored);
-                // Quick check if paths need update?
-                // For now, let's keep it simple. If user sees broken images, they can Reset or I just overwrite mock data if I want.
-                // Let's overwrite specific IDs if they exist to fix them? No too complex.
-                // Just use the initial if storage is empty, or maybe Force Update for this dev step?
-                // I'll stick to standard behavior: Load Local, else Initial.
-                // If the user has old data with bad paths, they can delete via Admin or clear cache.
-                // I will force reset for the "demo" sake by checking a version flag?
-                // Or easier: Just return initialProducts if specific corruption suspected.
                 return parsed.length > 0 ? parsed : initialProducts;
             } catch {
                 return initialProducts;
             }
         }
-        return initialProducts;
+        return initialProducts; 
+        */
     });
 
     useEffect(() => {

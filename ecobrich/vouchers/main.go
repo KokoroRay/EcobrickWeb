@@ -54,8 +54,16 @@ func handleRequest(ctx context.Context, request events.APIGatewayProxyRequest) (
 		return events.APIGatewayProxyResponse{StatusCode: 200, Headers: headers}, nil
 	}
 
+	// Extract User ID from Token for Points calculation
+	userID := ""
+	if claims, ok := request.RequestContext.Authorizer["claims"].(map[string]interface{}); ok {
+		if sub, ok := claims["sub"].(string); ok {
+			userID = sub
+		}
+	}
+
 	if method == "GET" {
-		return listVouchers(ctx, headers)
+		return listVouchers(ctx, headers, userID)
 	}
 
 	if method == "POST" {
@@ -65,9 +73,13 @@ func handleRequest(ctx context.Context, request events.APIGatewayProxyRequest) (
 	return events.APIGatewayProxyResponse{StatusCode: 405, Body: `{"message":"Method Not Allowed"}`, Headers: headers}, nil
 }
 
-func listVouchers(ctx context.Context, headers map[string]string) (events.APIGatewayProxyResponse, error) {
-	// Scan for PK=VOUCHER
-	// Note: For production, Query GSI is better. For <100 vouchers, Scan is fine.
+type ListResponse struct {
+	Vouchers   []Voucher `json:"vouchers"`
+	UserPoints float64   `json:"user_points"`
+}
+
+func listVouchers(ctx context.Context, headers map[string]string, userID string) (events.APIGatewayProxyResponse, error) {
+	// 1. Scan Vouchers
 	out, err := dbClient.Scan(ctx, &dynamodb.ScanInput{
 		TableName: aws.String(tableName),
 		FilterExpression: aws.String("PK = :pk"),
@@ -107,7 +119,42 @@ func listVouchers(ctx context.Context, headers map[string]string) (events.APIGat
 		vouchers = append(vouchers, v)
 	}
 
-	body, _ := json.Marshal(vouchers)
+	// 2. Calculate User Points if Logged In
+	userPoints := 0.0
+	if userID != "" {
+		pOut, err := dbClient.Query(ctx, &dynamodb.QueryInput{
+			TableName: aws.String(tableName),
+			KeyConditionExpression: aws.String("PK = :pk"),
+			ExpressionAttributeValues: map[string]types.AttributeValue{
+				":pk": &types.AttributeValueMemberS{Value: "USER#" + userID},
+			},
+		})
+		if err == nil {
+			for _, item := range pOut.Items {
+				status := ""
+				if val, ok := item["Status"].(*types.AttributeValueMemberS); ok {
+					status = val.Value
+				}
+				if status == "approved" || status == "" {
+					if pVal, ok := item["PointsEarned"].(*types.AttributeValueMemberN); ok {
+						p, _ := strconv.ParseFloat(pVal.Value, 64)
+						userPoints += p
+					}
+					if pVal, ok := item["PointsSpent"].(*types.AttributeValueMemberN); ok {
+						p, _ := strconv.ParseFloat(pVal.Value, 64)
+						userPoints -= p
+					}
+				}
+			}
+		}
+	}
+
+	resp := ListResponse{
+		Vouchers:   vouchers,
+		UserPoints: userPoints,
+	}
+
+	body, _ := json.Marshal(resp)
 	return events.APIGatewayProxyResponse{StatusCode: 200, Body: string(body), Headers: headers}, nil
 }
 

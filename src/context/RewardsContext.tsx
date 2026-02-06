@@ -129,14 +129,59 @@ export function RewardsProvider({ children }: { children: ReactNode }) {
       const res = await fetch(`${API_BASE}/vouchers`, { headers });
       if (res.ok) {
         const data = await res.json();
-        setAvailableVouchers(data || []);
+
+        // Handle new response format { vouchers: [], user_points: number }
+        let rawVouchers = [];
+        let backendPoints = 0;
+
+        if (Array.isArray(data)) {
+          // Legacy fallback
+          rawVouchers = data;
+        } else if (data && typeof data === 'object') {
+          rawVouchers = data.vouchers || [];
+          backendPoints = data.user_points || 0;
+        }
+
+        // Map snake_case from Backend to camelCase for Frontend
+        const mapped = Array.isArray(rawVouchers) ? rawVouchers.map((v: any) => ({
+          id: v.id,
+          title: v.title,
+          discount: v.discount,
+          code: v.code,
+          status: v.status,
+          pointsRequired: v.points_required || v.pointsRequired,
+          expiresAt: v.expires_at || v.expiresAt
+        })) : [];
+
+        setAvailableVouchers(mapped);
+
+        // Update User Points from Backend
+        if (currentUserId && currentUserId !== 'guest') {
+          setUsersDb(prev => {
+            const profile = prev[currentUserId] || {
+              id: currentUserId,
+              name: user?.username || 'User',
+              email: '',
+              totalKg: 0,
+              history: [],
+              claimedVouchers: []
+            };
+            return {
+              ...prev,
+              [currentUserId]: {
+                ...profile,
+                points: backendPoints // SYNC POINTS FROM BACKEND
+              }
+            };
+          });
+        }
       }
     } catch (e) {
       console.error("Fetch vouchers failed", e);
     } finally {
       setLoadingVouchers(false);
     }
-  }, []);
+  }, [currentUserId, user]);
 
   // Load vouchers on mount
   useEffect(() => {

@@ -124,6 +124,19 @@ export default function ProductDetail() {
                 </button>
               </div>
 
+              {/* Detailed Description Section */}
+              <div style={{ marginBottom: '2.5rem' }}>
+                <h4 style={{ marginBottom: '1rem', fontSize: '1.1rem', fontWeight: 600, color: '#334155' }}>Mô tả chi tiết</h4>
+                <div style={{ lineHeight: '1.8', color: '#475569', fontSize: '1rem' }}>
+                  <p style={{ marginBottom: '1rem' }}>{product.description}</p>
+                  <p>
+                    Sản phẩm {product.name} là giải pháp bền vững cho công trình xanh.
+                    Được sản xuất từ quy trình tái chế khép kín, đảm bảo chất lượng cao và thẩm mỹ vượt trội.
+                    Sử dụng sản phẩm này là bạn đang góp phần giảm thiểu rác thải nhựa ra môi trường.
+                  </p>
+                </div>
+              </div>
+
               {/* Specifications */}
               {product.specifications && Object.keys(product.specifications).length > 0 && (
                 <div style={{ background: '#f8fafc', padding: '1.5rem', borderRadius: '12px', marginBottom: '2rem', border: '1px solid #e2e8f0' }}>
