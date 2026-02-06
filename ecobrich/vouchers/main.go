@@ -41,7 +41,7 @@ func init() {
 }
 
 func handleRequest(ctx context.Context, request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
-	method := request.HttpMethod
+	method := request.HTTPMethod
 
 	// Enable CORS
 	headers := map[string]string{
