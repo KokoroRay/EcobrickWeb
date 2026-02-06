@@ -60,7 +60,7 @@ jobs:
           VITE_COGNITO_REDIRECT_SIGNIN: ${{ secrets.VITE_COGNITO_REDIRECT_SIGNIN }}
           VITE_COGNITO_REDIRECT_SIGNOUT: ${{ secrets.VITE_COGNITO_REDIRECT_SIGNOUT }}
           VITE_AWS_REGION: ${{ secrets.VITE_AWS_REGION }}
-          VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
+          VITE_API_URL: ${{ secrets.VITE_API_URL }}
         run: npm run build
       - uses: peaceiris/actions-gh-pages@v3
         with:
