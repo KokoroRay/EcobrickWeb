@@ -98,6 +98,27 @@ Resources:
     Metadata:
       BuildMethod: makefile
 
+  # ------------------------------------------------------------------
+  # 5. ADMIN FUNCTIONS
+  # ------------------------------------------------------------------
+  AdminAwardFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: .
+      Handler: bootstrap
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref PlasticDbTable
+      Events:
+        AdminAwardApi:
+          Type: Api
+          Properties:
+            RestApiId: !Ref PlasticApi
+            Path: /admin/award-points
+            Method: POST
+    Metadata:
+      BuildMethod: makefile
+
 Outputs:
   ApiEndpoint:
     Description: "API Gateway endpoint URL"

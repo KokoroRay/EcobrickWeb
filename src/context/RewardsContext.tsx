@@ -63,6 +63,7 @@ type RewardsState = {
   // Admin Actions
   updateDonationStatus: (userId: string, entryId: string, status: 'approved' | 'rejected') => void;
   adjustUserPoints: (userId: string, points: number, reason: string) => void;
+  adminAwardPoints: (targetUserId: string, amountKg: number, manualPoints?: number, note?: string) => Promise<boolean>;
   refreshData: () => void;
 };
 
@@ -336,6 +337,80 @@ export function RewardsProvider({ children }: { children: ReactNode }) {
       { ...voucher, id: `voucher-${Date.now()}`, status: 'available' },
       ...prev,
     ]);
+  }, []);
+
+  // Admin API: Award Points directly
+  const adminAwardPoints = useCallback(async (targetUserId: string, amountKg: number, manualPoints?: number, note?: string) => {
+    try {
+      const session = await fetchAuthSession();
+      const token = session.tokens?.idToken?.toString();
+
+      if (!token) {
+        alert("Vui lòng đăng nhập quyền Admin.");
+        return false;
+      }
+
+      const API_BASE = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/donate', '') : '';
+      if (!API_BASE) {
+        alert("Lỗi cấu hình: Thiếu API URL cơ sở.");
+        return false;
+      }
+
+      const response = await fetch(`${API_BASE}/admin/award-points`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': token
+        },
+        body: JSON.stringify({
+          target_user_id: targetUserId,
+          amount_kg: amountKg,
+          manual_points: manualPoints,
+          note: note
+        })
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        alert(`Thành công! Đã cộng điểm cho user.`);
+        // Optimistic update locally
+        setUsersDb(prev => {
+          const profile = prev[targetUserId];
+          if (!profile) return prev;
+
+          const pointsToAdd = manualPoints !== undefined ? manualPoints : (amountKg * 10);
+
+          return {
+            ...prev,
+            [targetUserId]: {
+              ...profile,
+              points: profile.points + pointsToAdd,
+              totalKg: profile.totalKg + amountKg,
+              history: [{
+                id: `admin-${Date.now()}`,
+                userId: targetUserId,
+                type: 'admin_adjust',
+                points: pointsToAdd,
+                kg: amountKg,
+                note: note || 'Admin awarded points',
+                status: 'approved',
+                createdAt: new Date().toISOString().slice(0, 10)
+              }, ...profile.history]
+            }
+          };
+        });
+        return true;
+      } else {
+        alert(`Lỗi: ${data.message || 'Thất bại'}`);
+        return false;
+      }
+
+    } catch (e) {
+      console.error(e);
+      alert("Lỗi kết nối.");
+      return false;
+    }
   }, []);
 
   const refreshData = () => {
