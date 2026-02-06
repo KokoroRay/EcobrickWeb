@@ -1,7 +1,8 @@
 import { Route, Routes } from 'react-router-dom';
-import { useState, useEffect } from 'react';
 import Header from './components/Header';
 import Footer from './components/Footer';
+import ProtectedRoute from './components/ProtectedRoute';
+import AdminRoute from './components/AdminRoute';
 import Home from './pages/Home';
 import About from './pages/About';
 import Products from './pages/Products';
@@ -16,11 +17,11 @@ import Rewards from './pages/Rewards';
 import Redeem from './pages/Redeem';
 import Vouchers from './pages/Vouchers';
 import Admin from './pages/Admin';
+import TestRole from './pages/TestRole';
 import { RewardsProvider } from './context/RewardsContext';
 import { AuthProvider } from './context/AuthContext';
 import { ToastProvider } from './context/ToastContext';
 import { Amplify } from 'aws-amplify';
-import { signOut, getCurrentUser } from 'aws-amplify/auth';
 import '@aws-amplify/ui-react/styles.css';
 
 const cognitoDomain = import.meta.env.VITE_COGNITO_DOMAIN;
@@ -50,49 +51,6 @@ Amplify.configure({
   }
 });
 
-// Protected route component
-function ProtectedRoute({ element }: { element: JSX.Element }) {
-  const [isLoading, setIsLoading] = useState(true);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [user, setUser] = useState<any>(null);
-
-  useEffect(() => {
-    checkAuth();
-  }, []);
-
-  const checkAuth = async () => {
-    try {
-      const currentUser = await getCurrentUser();
-      setUser(currentUser);
-      setIsAuthenticated(true);
-    } catch {
-      setIsAuthenticated(false);
-    }
-    setIsLoading(false);
-  };
-
-  const handleSignOut = async () => {
-    await signOut();
-    setIsAuthenticated(false);
-    window.location.href = '/';
-  };
-
-  if (isLoading) return <div>Loading...</div>;
-  if (!isAuthenticated) return <Login />;
-
-  return (
-    <div style={{ background: '#ffffff', minHeight: '100vh', padding: '20px' }}>
-      <div style={{ textAlign: 'center', padding: '10px', background: '#f0f0f0', marginBottom: '20px' }}>
-        <span>Xin chào {user?.username}</span>
-        <button onClick={handleSignOut} style={{ marginLeft: '10px', padding: '5px 15px', cursor: 'pointer' }}>
-          Đăng xuất
-        </button>
-      </div>
-      {element}
-    </div>
-  );
-}
-
 export default function App() {
   return (
     <AuthProvider>
@@ -113,11 +71,16 @@ export default function App() {
                 <Route path="/register" element={<Register />} />
                 <Route path="/forgot-password" element={<ForgotPassword />} />
                 
-                {/* Protected Routes */}
-                <Route path="/rewards" element={<ProtectedRoute element={<Rewards />} />} />
-                <Route path="/redeem" element={<ProtectedRoute element={<Redeem />} />} />
-                <Route path="/vouchers" element={<ProtectedRoute element={<Vouchers />} />} />
-                <Route path="/admin" element={<ProtectedRoute element={<Admin />} />} />
+                {/* Test Role - Kiểm tra role & token */}
+                <Route path="/test-role" element={<ProtectedRoute><TestRole /></ProtectedRoute>} />
+                
+                {/* Protected Routes - Yêu cầu đăng nhập */}
+                <Route path="/rewards" element={<ProtectedRoute><Rewards /></ProtectedRoute>} />
+                <Route path="/redeem" element={<ProtectedRoute><Redeem /></ProtectedRoute>} />
+                <Route path="/vouchers" element={<ProtectedRoute><Vouchers /></ProtectedRoute>} />
+                
+                {/* Admin Routes - Yêu cầu đăng nhập + role admin */}
+                <Route path="/admin" element={<AdminRoute><Admin /></AdminRoute>} />
               </Routes>
             </main>
             <Footer />
