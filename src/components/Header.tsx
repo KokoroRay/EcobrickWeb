@@ -58,20 +58,16 @@ export default function Header() {
                 Liên hệ
               </NavLink>
             </li>
-            <li className="navbar-item">
-              <NavLink to="/how-it-works" className={navLinkClass}>
-                Cách thức hoạt động
-              </NavLink>
-            </li>
-            <li className="navbar-item">
-              <NavLink to="/rewards" className={navLinkClass}>
-                Điểm & Ưu đãi
-              </NavLink>
-            </li>
-            <li className="navbar-item">
-              <NavLink to="/admin" className={navLinkClass}>
-                Admin
-              </NavLink>
+            <li className="navbar-item dropdown">
+              <span className="navbar-link">Cách thức hoạt động</span>
+              <ul className="dropdown-menu">
+                <li>
+                  <Link to="/how-it-works">Cách thức hoạt động</Link>
+                </li>
+                <li>
+                  <Link to="/rewards">Điểm & Ưu đãi</Link>
+                </li>
+              </ul>
             </li>
           </ul>
 

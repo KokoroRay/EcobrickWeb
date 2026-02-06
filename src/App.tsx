@@ -20,11 +20,29 @@ import { Amplify } from 'aws-amplify';
 import { signOut, getCurrentUser } from 'aws-amplify/auth';
 import '@aws-amplify/ui-react/styles.css';
 
+const cognitoDomain = import.meta.env.VITE_COGNITO_DOMAIN;
+const redirectSignIn = import.meta.env.VITE_COGNITO_REDIRECT_SIGNIN;
+const redirectSignOut = import.meta.env.VITE_COGNITO_REDIRECT_SIGNOUT;
+
 Amplify.configure({
   Auth: {
     Cognito: {
       userPoolId: import.meta.env.VITE_COGNITO_USER_POOL_ID,
       userPoolClientId: import.meta.env.VITE_COGNITO_CLIENT_ID,
+      region: import.meta.env.VITE_AWS_REGION,
+      ...(cognitoDomain && redirectSignIn && redirectSignOut
+        ? {
+            loginWith: {
+              oauth: {
+                domain: cognitoDomain,
+                scopes: ['email', 'openid', 'profile'],
+                redirectSignIn: [redirectSignIn],
+                redirectSignOut: [redirectSignOut],
+                responseType: 'code',
+              },
+            },
+          }
+        : {}),
     }
   }
 });
