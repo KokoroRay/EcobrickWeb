@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useRewards } from '../../context/RewardsContext';
+import { useToast } from '../../context/ToastContext';
 import { Html5QrcodeScanner } from 'html5-qrcode';
 
 // New Scanner Modal Component
@@ -170,6 +171,7 @@ function AdjustPointsModal({ userId: _userId, userName, currentPoints, onClose, 
 
 export default function AdminUsers() {
     const { allUsers, adminAwardPoints } = useRewards();
+    const { showToast } = useToast();
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedUser, setSelectedUser] = useState<{ id: string, name: string, points: number } | null>(null);
     const [showScanner, setShowScanner] = useState(false);
@@ -186,7 +188,12 @@ export default function AdminUsers() {
             const kgToSend = weight > 0 ? weight : 0;
             const pointsToSend = weight > 0 ? undefined : points;
 
-            await adminAwardPoints(selectedUser.id, kgToSend, pointsToSend, reason);
+            const success = await adminAwardPoints(selectedUser.id, kgToSend, pointsToSend, reason);
+            if (success) {
+                showToast(`Đã cập nhật điểm cho ${selectedUser.name}`, 'success');
+            } else {
+                showToast('Có lỗi xảy ra khi cập nhật điểm', 'error');
+            }
             setSelectedUser(null);
         }
     };

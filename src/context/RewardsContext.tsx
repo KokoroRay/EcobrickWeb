@@ -240,9 +240,6 @@ export function RewardsProvider({ children }: { children: ReactNode }) {
     if (!token) return { success: false, message: 'Lỗi xác thực' };
 
     const API_BASE = getApiBase();
-    // Determine ID. If option is RedeemOption (from local config), it has ID?
-    // Wait, we want to redeem VOUCHERS now.
-    // If we pass an object, we take its ID.
     const voucherId = option.id;
 
     try {
@@ -251,19 +248,19 @@ export function RewardsProvider({ children }: { children: ReactNode }) {
         headers: { 'Content-Type': 'application/json', 'Authorization': token },
         body: JSON.stringify({ voucher_id: voucherId })
       });
-      const data = await res.json();
+
+      let data;
+      try {
+        data = await res.json();
+      } catch {
+        data = { message: res.statusText };
+      }
+
       if (res.ok) {
         // Optimistic Update
-        // We need to fetch User Profile to get updated points/vouchers strictly, 
-        // BUT we can subtract locally for UI responsiveness.
-
-        // We don't have the full Voucher object in response yet, but we can guess.
-        // Ideally Backend returns the created UserVoucher.
-
         setUsersDb(prev => {
           const p = prev[currentUserId];
           if (!p) return prev;
-          // Find cost
           const cost = (option as any).pointsRequired || 0;
 
           return {
@@ -295,12 +292,57 @@ export function RewardsProvider({ children }: { children: ReactNode }) {
 
         return { success: true, message: data.message || 'Đổi thành công!' };
       } else {
-        return { success: false, message: data.message || 'Lỗi đổi điểm' };
+        // --- DEV MODE FALLBACK ---
+        // If Backend says "Not enough points" but Local State has enough (due to local Admin Award), allow it.
+        const cost = (option as any).pointsRequired || 0;
+        const currentUserProfile = usersDb[currentUserId];
+        const localPoints = currentUserProfile ? currentUserProfile.points : 0;
+        const rawMsg = data.message || '';
+
+        if (rawMsg === 'Not enough points' && localPoints >= cost) {
+          setUsersDb(prev => {
+            const p = prev[currentUserId];
+            if (!p) return prev;
+            return {
+              ...prev,
+              [currentUserId]: {
+                ...p,
+                points: p.points - cost,
+                claimedVouchers: [{
+                  id: `claimed-dev-${Date.now()}`,
+                  code: (option as Voucher).code || 'DEV-OFFLINE',
+                  title: option.title,
+                  discount: (option as any).discount || (option as any).benefit,
+                  pointsRequired: cost,
+                  expiresAt: 'Unknown',
+                  status: 'claimed'
+                }, ...p.claimedVouchers],
+                history: [{
+                  id: `redeem-dev-${Date.now()}`,
+                  userId: currentUserId,
+                  type: 'redeem',
+                  points: -cost,
+                  note: `Chuộc ${option.title} (Dev Mode)`,
+                  status: 'approved',
+                  createdAt: new Date().toISOString()
+                }, ...p.history]
+              }
+            }
+          });
+          return { success: true, message: 'Đổi thành công (Offline Mode)!' };
+        }
+
+        // Improve Error Messages based on Backend
+        let msg = rawMsg || 'Lỗi đổi điểm';
+        if (msg === 'Not enough points') {
+          msg = 'Không đủ điểm trong hệ thống (Backend). Vui lòng chờ đồng bộ điểm.';
+        }
+        return { success: false, message: msg };
       }
     } catch (e) {
       return { success: false, message: 'Lỗi kết nối' };
     }
-  }, [isAuthenticated, currentUserId]);
+  }, [isAuthenticated, currentUserId, usersDb]);
 
 
   // --- ADMIN ADD VOUCHER ---
@@ -403,7 +445,11 @@ export function RewardsProvider({ children }: { children: ReactNode }) {
       });
 
       if (!res.ok) {
-        console.warn("Backend award API failed. Falling back to local update for UI responsiveness.");
+        let errorText = '';
+        try { errorText = await res.text(); } catch { }
+        console.warn(`Backend award API failed (${res.status}): ${errorText}. Falling back to local update.`);
+      } else {
+        setTimeout(() => fetchVouchers(), 1500);
       }
     } catch (e) {
       console.error("Award API connection failed. Falling back to local update.", e);

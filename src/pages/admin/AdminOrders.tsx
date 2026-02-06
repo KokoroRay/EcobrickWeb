@@ -1,8 +1,10 @@
 import { useMemo } from 'react';
 import { useRewards } from '../../context/RewardsContext';
+import { useToast } from '../../context/ToastContext';
 
 export default function AdminOrders() {
     const { allUsers, updateDonationStatus } = useRewards();
+    const { showToast } = useToast();
 
     const pendingOrders = useMemo(() => {
         return allUsers.flatMap(user =>
@@ -11,6 +13,15 @@ export default function AdminOrders() {
                 .map(h => ({ ...h, userName: user.name, userEmail: user.email }))
         ).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
     }, [allUsers]);
+
+    const handleUpdateStatus = (uid: string, id: string, status: 'approved' | 'rejected') => {
+        updateDonationStatus(uid, id, status);
+        if (status === 'approved') {
+            showToast('Đã phê duyệt yêu cầu quyên góp!', 'success');
+        } else {
+            showToast('Đã từ chối yêu cầu.', 'error');
+        }
+    };
 
     if (pendingOrders.length === 0) {
         return (
@@ -67,7 +78,7 @@ export default function AdminOrders() {
                                         <button
                                             className="btn outline sm"
                                             style={{ borderColor: '#ef4444', color: '#ef4444', padding: '0.4rem 0.8rem' }}
-                                            onClick={() => updateDonationStatus(order.userId || '', order.id, 'rejected')}
+                                            onClick={() => handleUpdateStatus(order.userId || '', order.id, 'rejected')}
                                             title="Từ chối"
                                         >
                                             <i className="fa-solid fa-xmark"></i>
@@ -75,7 +86,7 @@ export default function AdminOrders() {
                                         <button
                                             className="btn primary sm"
                                             style={{ padding: '0.4rem 1.2rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
-                                            onClick={() => updateDonationStatus(order.userId || '', order.id, 'approved')}
+                                            onClick={() => handleUpdateStatus(order.userId || '', order.id, 'approved')}
                                         >
                                             <i className="fa-solid fa-check"></i> Duyệt
                                         </button>
