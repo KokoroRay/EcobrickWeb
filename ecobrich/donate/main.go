@@ -18,13 +18,13 @@ import (
 // Cấu trúc dữ liệu nhận từ Frontend
 type RequestBody struct {
 	Amount float64 `json:"amount"` // Số kg nhựa
+	Note   string  `json:"note"`
 }
 
 // Cấu trúc trả về
 type ResponseBody struct {
 	Message      string  `json:"message"`
-	PointsEarned float64 `json:"points_earned"`
-	TotalPoints  float64 `json:"total_points"`
+	PointsPending float64 `json:"points_pending"`
 }
 
 var dbClient *dynamodb.Client
@@ -42,12 +42,11 @@ func init() {
 
 func handleRequest(ctx context.Context, request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 	// 1. Lấy User ID từ Claims (Token)
-	// API Gateway Authorizer đã giải mã token và nhét vào request context
 	claims, ok := request.RequestContext.Authorizer["claims"].(map[string]interface{})
 	if !ok {
 		return response(401, "Không tìm thấy thông tin xác thực"), nil
 	}
-	userID := claims["sub"].(string) // "sub" là ID duy nhất của user trong Cognito
+	userID := claims["sub"].(string) 
 
 	// 2. Parse Body lấy số kg
 	var body RequestBody
@@ -59,50 +58,33 @@ func handleRequest(ctx context.Context, request events.APIGatewayProxyRequest) (
 		return response(400, "Số lượng phải lớn hơn 0"), nil
 	}
 
-	// 3. Tính điểm (Logic nghiệp vụ: 1kg = 10 điểm)
+	// 3. Tính điểm dự kiến (1kg = 10 điểm)
 	points := body.Amount * 10
 	timestamp := time.Now().Format(time.RFC3339)
 
-	// 4. Ghi vào DynamoDB (Transaction: Ghi lịch sử VÀ Cộng điểm profile cùng lúc)
-	// PK cho Profile: USER#<userid>, SK: PROFILE
-	// PK cho History: USER#<userid>, SK: TRANS#<timestamp>
+	// 4. Ghi vào DynamoDB - CHỈ GHI HISTORY với Status=pending
+	// Không cộng điểm ngay vào Profile
 	
 	userPK := "USER#" + userID
 	historySK := "TRANS#" + timestamp
+	
+	// Default note
+	note := body.Note
+	if note == "" {
+		note = "Quyên góp tại điểm thu gom"
+	}
 
-	_, err := dbClient.TransactWriteItems(ctx, &dynamodb.TransactWriteItemsInput{
-		TransactItems: []types.TransactWriteItem{
-			// Hành động 1: Tạo bản ghi lịch sử
-			{
-				Put: &types.Put{
-					TableName: aws.String(tableName),
-					Item: map[string]types.AttributeValue{
-						"PK":           &types.AttributeValueMemberS{Value: userPK},
-						"SK":           &types.AttributeValueMemberS{Value: historySK},
-						"Type":         &types.AttributeValueMemberS{Value: "DONATE"},
-						"AmountKg":     &types.AttributeValueMemberN{Value: fmt.Sprintf("%f", body.Amount)},
-						"PointsEarned": &types.AttributeValueMemberN{Value: fmt.Sprintf("%f", points)},
-						"CreatedAt":    &types.AttributeValueMemberS{Value: timestamp},
-					},
-				},
-			},
-			// Hành động 2: Cộng điểm vào Profile (Atomic Counter)
-			// Nếu Profile chưa có, nó sẽ tự tạo mới nhờ UpdateItem
-			{
-				Update: &types.Update{
-					TableName: aws.String(tableName),
-					Key: map[string]types.AttributeValue{
-						"PK": &types.AttributeValueMemberS{Value: userPK},
-						"SK": &types.AttributeValueMemberS{Value: "PROFILE"},
-					},
-					// Cộng điểm vào field TotalPoints
-					UpdateExpression: aws.String("ADD TotalPoints :p SET UpdatedAt = :t"),
-					ExpressionAttributeValues: map[string]types.AttributeValue{
-						":p": &types.AttributeValueMemberN{Value: fmt.Sprintf("%f", points)},
-						":t": &types.AttributeValueMemberS{Value: timestamp},
-					},
-				},
-			},
+	_, err := dbClient.PutItem(ctx, &dynamodb.PutItemInput{
+		TableName: aws.String(tableName),
+		Item: map[string]types.AttributeValue{
+			"PK":           &types.AttributeValueMemberS{Value: userPK},
+			"SK":           &types.AttributeValueMemberS{Value: historySK},
+			"Type":         &types.AttributeValueMemberS{Value: "DONATE"},
+			"AmountKg":     &types.AttributeValueMemberN{Value: fmt.Sprintf("%f", body.Amount)},
+			"PointsEarned": &types.AttributeValueMemberN{Value: fmt.Sprintf("%f", points)},
+			"Note":         &types.AttributeValueMemberS{Value: note},
+			"Status":       &types.AttributeValueMemberS{Value: "pending"}, // Chờ duyệt
+			"CreatedAt":    &types.AttributeValueMemberS{Value: timestamp},
 		},
 	})
 

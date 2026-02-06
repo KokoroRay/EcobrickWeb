@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useRewards } from '../context/RewardsContext';
 import { useAuth } from '../context/AuthContext';
+import { QRCodeCanvas } from 'qrcode.react';
 import '../styles/dashboard.css';
 
 export default function Rewards() {
@@ -94,6 +95,15 @@ export default function Rewards() {
                   <div className="value" style={{ color: '#3b82f6' }}>{totalKg}</div>
                 </div>
               </div>
+            </div>
+
+            {/* QR Code Card */}
+            <div className="profile-card" style={{ marginTop: '1.5rem', textAlign: 'center' }}>
+              <h4 style={{ marginBottom: '1rem', color: '#1e293b' }}>Mã thành viên của bạn</h4>
+              <div style={{ background: 'white', padding: '10px', display: 'inline-block', borderRadius: '8px', border: '1px solid #eee' }}>
+                <QRCodeCanvas value={userAttributes?.sub || user?.username || 'unknown'} size={150} />
+              </div>
+              <p style={{ fontSize: '0.8rem', color: '#64748b', marginTop: '0.5rem' }}>Đưa mã này cho Admin tại điểm thu gom để tích điểm nhanh.</p>
             </div>
 
             <div className="action-card" style={{ marginTop: '2rem', textAlign: 'center', background: 'linear-gradient(to right, #20803F, #16a34a)', color: 'white', border: 'none' }}>

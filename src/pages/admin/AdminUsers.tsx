@@ -1,12 +1,51 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRewards } from '../../context/RewardsContext';
+import { Html5QrcodeScanner } from 'html5-qrcode';
+
+// New Scanner Modal Component
+function ScannerModal({ onClose, onScanSuccess }: { onClose: () => void, onScanSuccess: (decodedText: string) => void }) {
+    useEffect(() => {
+        const scanner = new Html5QrcodeScanner(
+            "reader",
+            { fps: 10, qrbox: { width: 250, height: 250 } },
+            /* verbose= */ false
+        );
+        scanner.render((decodedText) => {
+            scanner.clear();
+            onScanSuccess(decodedText);
+        }, (error) => {
+            // handle error if needed, usually ignore noise
+        });
+
+        return () => {
+            // Cleanup
+            try {
+                scanner.clear().catch(err => console.warn("Scanner clear error", err));
+            } catch (e) {
+                // ignore
+            }
+        };
+    }, [onScanSuccess]);
+
+    return (
+        <div className="admin-modal-overlay" style={{ position: 'fixed', inset: 0, zIndex: 1100, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.8)' }}>
+            <div className="admin-modal" style={{ background: 'white', padding: '1rem', borderRadius: '12px', width: '90%', maxWidth: '500px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
+                    <h3>Quét mã QR User</h3>
+                    <button onClick={onClose} style={{ border: 'none', background: 'none', fontSize: '1.2rem' }}><i className="fa-solid fa-xmark"></i></button>
+                </div>
+                <div id="reader"></div>
+            </div>
+        </div>
+    );
+}
 
 type AdjustModalProps = {
     userId: string;
     userName: string;
     currentPoints: number;
     onClose: () => void;
-    onConfirm: (points: number, reason: string) => void;
+    onConfirm: (points: number, weight: number, reason: string) => void;
 };
 
 function AdjustPointsModal({ userId, userName, currentPoints, onClose, onConfirm }: AdjustModalProps) {
@@ -60,7 +99,7 @@ function AdjustPointsModal({ userId, userName, currentPoints, onClose, onConfirm
                         />
                         <span style={{ position: 'absolute', right: '1rem', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8', fontSize: '0.9rem' }}>kg</span>
                     </div>
-                    {weight && <div style={{ fontSize: '0.8rem', color: '#16a34a', marginTop: '0.25rem' }}><i className="fa-solid fa-calculator"></i> Tự động quy đổi: {weight}kg x 10 = {parseInt(weight) * 10} điểm</div>}
+                    {weight && <div style={{ fontSize: '0.8rem', color: '#16a34a', marginTop: '0.25rem' }}><i className="fa-solid fa-calculator"></i> Tự động quy đổi: {weight}kg x 10 = {Math.floor(parseFloat(weight) * 10)} điểm</div>}
                 </div>
 
                 <div className="form-input-group" style={{ marginTop: '1rem' }}>
@@ -92,7 +131,7 @@ function AdjustPointsModal({ userId, userName, currentPoints, onClose, onConfirm
                     <button className="btn outline sm" onClick={onClose} style={{ border: '1px solid #e2e8f0', color: '#64748b' }}>Hủy bỏ</button>
                     <button
                         className="btn primary sm"
-                        onClick={() => onConfirm(points, reason)}
+                        onClick={() => onConfirm(points, weight ? parseFloat(weight) : 0, reason)}
                         disabled={points === 0}
                     >
                         <i className="fa-solid fa-check"></i> Cập nhật
@@ -107,33 +146,39 @@ export default function AdminUsers() {
     const { allUsers, adminAwardPoints } = useRewards();
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedUser, setSelectedUser] = useState<{ id: string, name: string, points: number } | null>(null);
+    const [showScanner, setShowScanner] = useState(false);
 
     const filteredUsers = allUsers.filter(u =>
         u.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         u.email.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
-    const handleAdjust = async (points: number, reason: string) => {
+    const handleAdjust = async (points: number, weight: number, reason: string) => {
         if (selectedUser) {
-            // Check if it's manual points or weight based
-            // It's tricky because the modal returns only points and reason. 
-            // Better to update modal to pass weight if available, or just infer?
-            // Wait, I updated modal to have weight state but onConfirm only sends points.
-            // I should have updated modal onConfirm signature too.
-            // However, for now let's assume if it is point adjustment, acts as manual.
-            // If we want kg recording, we need to pass kg.
+            // If weight is provided (>0), use it (backend will calc points).
+            // If only points provided (weight 0), backend uses ManualPoints.
+            const kgToSend = weight > 0 ? weight : 0;
+            const pointsToSend = weight > 0 ? undefined : points;
 
-            // Let's rely on the Points value for now as 'manualPoints'.
-            // If we want detailed tracking (kg vs points), we need to update the Modal interface.
-            // But to fix valid API call first:
-
-            await adminAwardPoints(selectedUser.id, 0, points, reason);
+            await adminAwardPoints(selectedUser.id, kgToSend, pointsToSend, reason);
             setSelectedUser(null);
+        }
+    };
+
+    const handleScanSuccess = (userId: string) => {
+        setShowScanner(false);
+        const user = allUsers.find(u => u.id === userId || u.email === userId); // Try matching ID or Email (QR usually stores sub)
+        if (user) {
+            setSelectedUser({ id: user.id, name: user.name, points: user.points });
+        } else {
+            alert("Không tìm thấy user với mã này: " + userId);
         }
     };
 
     return (
         <div>
+            {showScanner && <ScannerModal onClose={() => setShowScanner(false)} onScanSuccess={handleScanSuccess} />}
+
             <div className="admin-page-header">
                 <h2 className="admin-page-title">Quản lý người dùng</h2>
                 <p className="admin-page-desc">Danh sách {allUsers.length} thành viên đã đăng ký.</p>
@@ -151,6 +196,10 @@ export default function AdminUsers() {
                             onChange={e => setSearchTerm(e.target.value)}
                         />
                     </div>
+
+                    <button className="btn primary sm" onClick={() => setShowScanner(true)}>
+                        <i className="fa-solid fa-qrcode"></i> Quét QR
+                    </button>
 
                     <button className="btn outline sm" title="Tính năng xuất Excel đang phát triển">
                         <i className="fa-solid fa-download"></i> Xuất danh sách
@@ -202,7 +251,7 @@ export default function AdminUsers() {
                     userName={selectedUser.name}
                     currentPoints={selectedUser.points}
                     onClose={() => setSelectedUser(null)}
-                    onConfirm={handleAdjust} // This needs to be updated to be async and call the new context function
+                    onConfirm={handleAdjust}
                 />
             )}
         </div>

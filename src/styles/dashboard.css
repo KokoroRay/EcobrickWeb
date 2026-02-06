@@ -20,7 +20,7 @@
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
     text-align: center;
     position: relative;
-    overflow: hidden;
+    /* overflow: hidden; Removed to ensure QR code or tooltips aren't clipped */
     border: 1px solid #f1f5f9;
 }
 
@@ -269,7 +269,38 @@
     color: #15803d;
 }
 
-.st-rejected {
-    background: #fee2e2;
-    color: #b91c1c;
+
+@media (max-width: 768px) {
+    .dashboard-container {
+        display: flex;
+        /* Changed from grid to flex to control order easily if needed, but grid 1fr is also stacking. Flex column is safer for gap control. */
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+
+    .profile-card,
+    .action-card {
+        padding: 1.25rem;
+        /* Reduced padding */
+    }
+
+    .profile-stats {
+        padding-top: 1rem;
+    }
+
+    .stat-item .value {
+        font-size: 1.25rem;
+    }
+
+    .card-header {
+        flex-direction: row;
+        /* Keep row but maybe wrap if titles are long */
+        align-items: flex-start;
+    }
+}
+
+/* QR Code Responsive Wrapper */
+.qr-code-wrapper canvas {
+    max-width: 100% !important;
+    height: auto !important;
 }

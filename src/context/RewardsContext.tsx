@@ -139,6 +139,7 @@ export function RewardsProvider({ children }: { children: ReactNode }) {
 
         // 2. Call API
         // 2. Call API
+        // 2. Call API
         const API_URL = import.meta.env.VITE_API_URL;
 
         if (!API_URL) {
@@ -147,40 +148,30 @@ export function RewardsProvider({ children }: { children: ReactNode }) {
           return false;
         }
 
-        // Attempting API call - in a real scenario this would be the primary action
-        // For development/demo without a real backend URL reachable, we might fallback or fail.
-        // Here we simulate a real call structure.
-
-        /* 
-           Uncomment this block when API is ready to test connectivity
-           
+        // Real API Call
         const response = await fetch(API_URL, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             'Authorization': token
           },
-          body: JSON.stringify({ amount: kg })
+          body: JSON.stringify({ amount: kg, note: note })
         });
+
         const data = await response.json();
-        if (!response.ok) throw new Error(data.message || 'API Error');
-        */
 
-        // --- SIMULATION / HYBRID MODE ---
-        // Since we might not have the API running yet, we continue to use the local logic 
-        // effectively simulating a successful API call for the UI.
-        // In production, the above fetch block would be the only source of truth.
+        if (!response.ok) {
+          throw new Error(data.message || 'API Error');
+        }
 
-        console.log("Mocking API Call to:", API_URL, "with token:", token?.slice(0, 10) + "...");
-        await new Promise(resolve => setTimeout(resolve, 800)); // Simulate net delay
-
-        const earned = kg * config.pointsPerKg;
+        // Success - Optimistic UI Update (Status: pending)
+        // Note: Points are NOT added yet.
         const newEntry: RewardHistoryEntry = {
           id: `history-${Date.now()}`,
           userId: currentUserId,
           type: 'donate',
           kg,
-          points: earned,
+          points: kg * config.pointsPerKg, // Display estimated points
           note,
           status: 'pending',
           createdAt: new Date().toISOString().slice(0, 10),
@@ -198,6 +189,7 @@ export function RewardsProvider({ children }: { children: ReactNode }) {
           };
         });
 
+        alert("Gửi yêu cầu thành công! Vui lòng chờ Admin duyệt.");
         return true;
 
       } catch (error) {
