@@ -1,6 +1,6 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import { BrowserRouter } from 'react-router-dom';
+import { HashRouter } from 'react-router-dom';
 import App from './App';
 import './index.css';
 
@@ -10,12 +10,11 @@ if (!rootElement) {
   throw new Error('Root element not found');
 }
 
-const basename = import.meta.env.VITE_BASE_PATH || '/EcobrickWeb/';
-
+// HashRouter does not need a basename for this setup on GitHub Pages
 createRoot(rootElement).render(
   <StrictMode>
-    <BrowserRouter basename={basename}>
+    <HashRouter>
       <App />
-    </BrowserRouter>
+    </HashRouter>
   </StrictMode>,
 );

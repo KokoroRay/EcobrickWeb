@@ -1,28 +1,82 @@
 import { useState } from 'react';
 import { useRewards } from '../../context/RewardsContext';
+import { Voucher } from '../../types/rewards';
 
 export default function AdminVouchers() {
-    const { availableVouchers, addVoucher, config, updatePointsPerKg } = useRewards();
-    const [pointsPerKg, setPointsPerKg] = useState(config.pointsPerKg);
+    const { availableVouchers, addVoucher, deleteVoucher, editVoucher, config, updatePointsPerKg } = useRewards();
+    const [pointsPerKg, setPointsPerKg] = useState<string>(config.pointsPerKg.toString());
+
+    // Form State
     const [voucherTitle, setVoucherTitle] = useState('Voucher mới');
-    const [voucherPoints, setVoucherPoints] = useState(200);
+    const [voucherPoints, setVoucherPoints] = useState<string>('200');
     const [voucherDiscount, setVoucherDiscount] = useState('8%');
+    const [editingId, setEditingId] = useState<string | null>(null);
 
     const handleUpdateConfig = () => {
-        updatePointsPerKg(pointsPerKg);
-        alert('Đã cập nhật tỷ lệ quy đổi!');
+        const val = Number(pointsPerKg);
+        if (val > 0) {
+            updatePointsPerKg(val);
+            alert('Đã cập nhật tỷ lệ quy đổi!');
+        }
     };
 
-    const handleAddVoucher = () => {
-        addVoucher({
-            title: voucherTitle,
-            code: `ADMIN-${Date.now().toString().slice(-4)}`,
-            discount: voucherDiscount,
-            pointsRequired: voucherPoints,
-            expiresAt: '2026-12-31',
-        });
+    const handleSaveVoucher = () => {
+        const points = Number(voucherPoints) || 0;
+        if (points <= 0) {
+            alert("Điểm yêu cầu phải lớn hơn 0");
+            return;
+        }
+
+        if (editingId) {
+            // Edit Mode
+            const existing = availableVouchers.find(v => v.id === editingId);
+            if (existing) {
+                editVoucher({
+                    ...existing,
+                    title: voucherTitle,
+                    discount: voucherDiscount,
+                    pointsRequired: points
+                });
+                alert("Đã cập nhật voucher!");
+            }
+            setEditingId(null);
+        } else {
+            // Add Mode
+            addVoucher({
+                title: voucherTitle,
+                code: `ADMIN-${Date.now().toString().slice(-4)}`,
+                discount: voucherDiscount,
+                pointsRequired: points,
+                expiresAt: '2026-12-31',
+            });
+            alert("Đã thêm voucher mới!");
+        }
+
+        // Reset Form
         setVoucherTitle('Voucher mới');
-        setVoucherPoints(200);
+        setVoucherPoints('200');
+        setVoucherDiscount('8%');
+    };
+
+    const startEdit = (voucher: Voucher) => {
+        setEditingId(voucher.id);
+        setVoucherTitle(voucher.title);
+        setVoucherPoints(voucher.pointsRequired.toString());
+        setVoucherDiscount(voucher.discount);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    const cancelEdit = () => {
+        setEditingId(null);
+        setVoucherTitle('Voucher mới');
+        setVoucherPoints('200');
+        setVoucherDiscount('8%');
+    };
+
+    const handleDelete = (id: string) => {
+        if (window.confirm("Bạn có chắc muốn xóa voucher này không?")) {
+            deleteVoucher(id);
+        }
     };
 
     return (
@@ -48,7 +102,7 @@ export default function AdminVouchers() {
                                 min={1}
                                 className="form-field"
                                 value={pointsPerKg}
-                                onChange={(event) => setPointsPerKg(Number(event.target.value))}
+                                onChange={(event) => setPointsPerKg(event.target.value)}
                             />
                             <button className="btn primary" onClick={handleUpdateConfig}>Lưu</button>
                         </div>
@@ -61,7 +115,7 @@ export default function AdminVouchers() {
                 <div className="stat-widget">
                     <h3 style={{ fontSize: '1.1rem', marginBottom: '1.5rem', borderBottom: '1px solid #f1f5f9', paddingBottom: '0.5rem' }}>
                         <i className="fa-solid fa-ticket" style={{ color: '#20803F', marginRight: '0.5rem' }}></i>
-                        Tạo Voucher mới
+                        {editingId ? 'Cập nhật Voucher' : 'Tạo Voucher mới'}
                     </h3>
 
                     <div className="form-input-group">
@@ -82,7 +136,7 @@ export default function AdminVouchers() {
                                 min={50}
                                 className="form-field"
                                 value={voucherPoints}
-                                onChange={(event) => setVoucherPoints(Number(event.target.value))}
+                                onChange={(event) => setVoucherPoints(event.target.value)}
                             />
                         </div>
                         <div className="form-input-group">
@@ -96,9 +150,12 @@ export default function AdminVouchers() {
                         </div>
                     </div>
 
-                    <div style={{ textAlign: 'right' }}>
-                        <button className="btn outline" onClick={handleAddVoucher}>
-                            <i className="fa-solid fa-plus"></i> Thêm Voucher
+                    <div style={{ textAlign: 'right', marginTop: '1rem', display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
+                        {editingId && (
+                            <button className="btn outline" onClick={cancelEdit}>Hủy</button>
+                        )}
+                        <button className="btn outline" onClick={handleSaveVoucher} style={{ borderColor: editingId ? '#20803F' : undefined, color: editingId ? '#20803F' : undefined }}>
+                            {editingId ? <><i className="fa-solid fa-save"></i> Cập nhật</> : <><i className="fa-solid fa-plus"></i> Thêm Voucher</>}
                         </button>
                     </div>
                 </div>
@@ -118,6 +175,7 @@ export default function AdminVouchers() {
                             <th>Trị giá</th>
                             <th>Điểm yêu cầu</th>
                             <th>Hạn sử dụng</th>
+                            <th style={{ textAlign: 'right' }}>Thao tác</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -132,6 +190,24 @@ export default function AdminVouchers() {
                                 <td style={{ color: '#20803F', fontWeight: 600 }}>{voucher.discount}</td>
                                 <td>{voucher.pointsRequired} điểm</td>
                                 <td className="text-muted">{voucher.expiresAt}</td>
+                                <td style={{ textAlign: 'right' }}>
+                                    <button
+                                        className="btn outline sm"
+                                        onClick={() => startEdit(voucher)}
+                                        style={{ marginRight: '0.5rem' }}
+                                        title="Chỉnh sửa"
+                                    >
+                                        <i className="fa-solid fa-pen"></i>
+                                    </button>
+                                    <button
+                                        className="btn outline sm"
+                                        onClick={() => handleDelete(voucher.id)}
+                                        style={{ color: '#ef4444', borderColor: '#ef4444' }}
+                                        title="Xóa"
+                                    >
+                                        <i className="fa-solid fa-trash"></i>
+                                    </button>
+                                </td>
                             </tr>
                         ))}
                     </tbody>

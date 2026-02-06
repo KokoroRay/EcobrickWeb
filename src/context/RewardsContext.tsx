@@ -58,7 +58,11 @@ type RewardsState = {
   addDonation: (kg: number, note?: string) => Promise<boolean>;
   redeemOption: (option: RedeemOption) => { success: boolean; message: string };
   updatePointsPerKg: (value: number) => void;
+
+  // Voucher Actions
   addVoucher: (voucher: Omit<Voucher, 'id' | 'status'>) => void;
+  deleteVoucher: (id: string) => void;
+  editVoucher: (voucher: Voucher) => void;
 
   // Admin Actions
   updateDonationStatus: (userId: string, entryId: string, status: 'approved' | 'rejected') => void;
@@ -138,14 +142,17 @@ export function RewardsProvider({ children }: { children: ReactNode }) {
         }
 
         // 2. Call API
-        // 2. Call API
-        // 2. Call API
-        const API_URL = import.meta.env.VITE_API_URL;
-
+        let API_URL = import.meta.env.VITE_API_URL;
         if (!API_URL) {
           console.error("VITE_API_URL is missing in .env");
           alert("Lỗi cấu hình hệ thống: Thiếu API URL.");
           return false;
+        }
+
+        // Ensure URL points to /donate endpoint
+        // If API_URL is root (ends in /Prod/ or /Prod), append donate
+        if (!API_URL.includes('/donate')) {
+          API_URL = API_URL.endsWith('/') ? `${API_URL}donate` : `${API_URL}/donate`;
         }
 
         // Real API Call
@@ -258,7 +265,6 @@ export function RewardsProvider({ children }: { children: ReactNode }) {
       if (entryIndex === -1) return prev;
 
       const entry = profile.history[entryIndex];
-      // Allow modifying refined items just in case, but usually pending only
 
       const updatedEntry = { ...entry, status: newStatus };
       const updatedHistory = [...profile.history];
@@ -267,13 +273,10 @@ export function RewardsProvider({ children }: { children: ReactNode }) {
       let newPoints = profile.points;
       let newTotalKg = profile.totalKg;
 
-      // Logic: If moving TO approved, add. If moving FROM approved (e.g. undo), subtract?
-      // For simplicity, we assume one-way flow for now or strict 'pending' check in robust systems.
       if (entry.status === 'pending' && newStatus === 'approved') {
         newPoints += (entry.points || 0);
         newTotalKg += (entry.kg || 0);
       } else if (entry.status === 'approved' && newStatus === 'rejected') {
-        // Revert points if rejected after approval
         newPoints -= (entry.points || 0);
         newTotalKg -= (entry.kg || 0);
       }
@@ -331,6 +334,14 @@ export function RewardsProvider({ children }: { children: ReactNode }) {
     ]);
   }, []);
 
+  const deleteVoucher = useCallback((id: string) => {
+    setAvailableVouchers((prev) => prev.filter(v => v.id !== id));
+  }, []);
+
+  const editVoucher = useCallback((voucher: Voucher) => {
+    setAvailableVouchers((prev) => prev.map(v => v.id === voucher.id ? voucher : v));
+  }, []);
+
   // Admin API: Award Points directly
   const adminAwardPoints = useCallback(async (targetUserId: string, amountKg: number, manualPoints?: number, note?: string) => {
     try {
@@ -342,11 +353,16 @@ export function RewardsProvider({ children }: { children: ReactNode }) {
         return false;
       }
 
-      const API_BASE = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/donate', '') : '';
+      let API_BASE = import.meta.env.VITE_API_URL;
       if (!API_BASE) {
         alert("Lỗi cấu hình: Thiếu API URL cơ sở.");
         return false;
       }
+
+      // Clean URL to get base for admin endpoint
+      // Ensure we remove /donate if it exists to get the root
+      API_BASE = API_BASE.replace(/\/donate\/?$/, '');
+      if (API_BASE.endsWith('/')) API_BASE = API_BASE.slice(0, -1);
 
       const response = await fetch(`${API_BASE}/admin/award-points`, {
         method: 'POST',
@@ -422,8 +438,11 @@ export function RewardsProvider({ children }: { children: ReactNode }) {
       redeemOption,
       updatePointsPerKg,
       addVoucher,
+      deleteVoucher,
+      editVoucher,
       updateDonationStatus,
       adjustUserPoints,
+      adminAwardPoints,
       refreshData
     }),
     [
@@ -437,8 +456,11 @@ export function RewardsProvider({ children }: { children: ReactNode }) {
       redeemOption,
       updatePointsPerKg,
       addVoucher,
+      deleteVoucher,
+      editVoucher,
       updateDonationStatus,
-      adjustUserPoints
+      adjustUserPoints,
+      adminAwardPoints
     ],
   );
 

@@ -13,7 +13,7 @@ function ScannerModal({ onClose, onScanSuccess }: { onClose: () => void, onScanS
         scanner.render((decodedText) => {
             scanner.clear();
             onScanSuccess(decodedText);
-        }, (error) => {
+        }, (_error) => {
             // handle error if needed, usually ignore noise
         });
 
@@ -29,12 +29,17 @@ function ScannerModal({ onClose, onScanSuccess }: { onClose: () => void, onScanS
 
     return (
         <div className="admin-modal-overlay" style={{ position: 'fixed', inset: 0, zIndex: 1100, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.8)' }}>
-            <div className="admin-modal" style={{ background: 'white', padding: '1rem', borderRadius: '12px', width: '90%', maxWidth: '500px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
-                    <h3>Quét mã QR User</h3>
-                    <button onClick={onClose} style={{ border: 'none', background: 'none', fontSize: '1.2rem' }}><i className="fa-solid fa-xmark"></i></button>
+            <div className="admin-modal" style={{ background: 'white', padding: '1rem', borderRadius: '12px', width: '90%', maxWidth: '500px', position: 'relative' }}>
+                <button
+                    onClick={onClose}
+                    style={{ position: 'absolute', top: '10px', right: '10px', border: 'none', background: '#f1f5f9', borderRadius: '50%', width: '30px', height: '30px', cursor: 'pointer', zIndex: 10 }}
+                >
+                    <i className="fa-solid fa-xmark"></i>
+                </button>
+                <div style={{ marginTop: '20px' }}>
+                    <h3 style={{ textAlign: 'center', marginBottom: '1rem' }}>Quét mã QR User</h3>
+                    <div id="reader"></div>
                 </div>
-                <div id="reader"></div>
             </div>
         </div>
     );
@@ -45,27 +50,48 @@ type AdjustModalProps = {
     userName: string;
     currentPoints: number;
     onClose: () => void;
-    onConfirm: (points: number, weight: number, reason: string) => void;
+    onConfirm: (points: number, weight: number, reason: string) => Promise<void>;
 };
 
-function AdjustPointsModal({ userId, userName, currentPoints, onClose, onConfirm }: AdjustModalProps) {
-    const [points, setPoints] = useState(0);
-    const [weight, setWeight] = useState<string>(''); // Keep as string to allow empty
+function AdjustPointsModal({ userId: _userId, userName, currentPoints, onClose, onConfirm }: AdjustModalProps) {
+    // Use strings for inputs to handle "empty" state correctly (delete leading zero)
+    const [points, setPoints] = useState<string>('');
+    const [weight, setWeight] = useState<string>('');
     const [reason, setReason] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const handleWeightChange = (val: string) => {
         setWeight(val);
         const num = parseFloat(val);
-        if (!isNaN(num)) {
-            setPoints(Math.floor(num * 10)); // Auto-calc: 1kg = 10 pts
+        if (!isNaN(num) && val !== '') {
+            setPoints(Math.floor(num * 10).toString()); // Auto-calc: 1kg = 10 pts
         } else {
-            setPoints(0);
+            setPoints('');
         }
     };
 
-    const handlePointsChange = (val: number) => {
+    const handlePointsChange = (val: string) => {
         setPoints(val);
-        setWeight(''); // Clear weight if manual points entered
+        // Clear weight if manual points entered to avoid confusion, 
+        // OR keep it but prioritize manual input logic. 
+        // For simplicity, if user types points, they override the auto-calc.
+        if (weight) setWeight('');
+    };
+
+    const handleSubmit = async () => {
+        if (!points && !weight) return;
+        setIsSubmitting(true);
+        // Convert 'points' string to number. If empty, 0.
+        // Actually, if 'weight' is present, we might want backend calculation?
+        // But here we already calculated points in frontend.
+        // Let's pass what we have.
+
+        await onConfirm(
+            points ? parseFloat(points) : 0,
+            weight ? parseFloat(weight) : 0,
+            reason
+        );
+        setIsSubmitting(false);
     };
 
     return (
@@ -108,11 +134,11 @@ function AdjustPointsModal({ userId, userName, currentPoints, onClose, onConfirm
                         type="number"
                         className="form-field"
                         value={points}
-                        onChange={e => handlePointsChange(Number(e.target.value))}
+                        onChange={e => handlePointsChange(e.target.value)}
                         placeholder="0"
                     />
                     <div style={{ fontSize: '0.8rem', color: '#64748b', marginTop: '0.25rem' }}>
-                        {points > 0 ? 'Thêm điểm' : (points < 0 ? 'Trừ điểm' : 'Nhập số điểm')}
+                        {points && parseFloat(points) > 0 ? 'Thêm điểm' : (points && parseFloat(points) < 0 ? 'Trừ điểm' : 'Nhập số điểm')}
                     </div>
                 </div>
 
@@ -128,13 +154,13 @@ function AdjustPointsModal({ userId, userName, currentPoints, onClose, onConfirm
                 </div>
 
                 <div style={{ display: 'flex', gap: '1rem', marginTop: '2rem', justifyContent: 'flex-end' }}>
-                    <button className="btn outline sm" onClick={onClose} style={{ border: '1px solid #e2e8f0', color: '#64748b' }}>Hủy bỏ</button>
+                    <button className="btn outline sm" onClick={onClose} style={{ border: '1px solid #e2e8f0', color: '#64748b' }} disabled={isSubmitting}>Hủy bỏ</button>
                     <button
                         className="btn primary sm"
-                        onClick={() => onConfirm(points, weight ? parseFloat(weight) : 0, reason)}
-                        disabled={points === 0}
+                        onClick={handleSubmit}
+                        disabled={(!points && !weight) || isSubmitting}
                     >
-                        <i className="fa-solid fa-check"></i> Cập nhật
+                        {isSubmitting ? <i className="fa-solid fa-spinner fa-spin"></i> : <><i className="fa-solid fa-check"></i> Cập nhật</>}
                     </button>
                 </div>
             </div>
