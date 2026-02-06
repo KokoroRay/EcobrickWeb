@@ -1,6 +1,7 @@
 import { NavLink, Link, useNavigate } from 'react-router-dom';
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { getAssetPath } from '../utils/assets';
 
 const navLinkClass = ({ isActive }: { isActive: boolean }) =>
   `navbar-link${isActive ? ' active' : ''}`;
@@ -47,7 +48,7 @@ export default function Header() {
         <div className="overlay" data-overlay></div>
         <Link to="/" className="logo">
           <img
-            src={`${import.meta.env.BASE_URL}LogoEBcolor.png`}
+            src={getAssetPath('LogoEBcolor.png')}
             width={60}
             height={60}
             alt="Ecobrick logo"
@@ -138,7 +139,7 @@ export default function Header() {
                       {getInitials()}
                     </div>
                   </button>
-                  
+
                   {showDropdown && (
                     <div className="user-dropdown">
                       <div className="user-dropdown-header">
@@ -150,9 +151,9 @@ export default function Header() {
                           <div className="user-email">{userAttributes?.email}</div>
                         </div>
                       </div>
-                      
+
                       <div className="user-dropdown-divider"></div>
-                      
+
                       <ul className="user-dropdown-menu">
                         <li>
                           <Link to="/rewards" onClick={() => setShowDropdown(false)}>
@@ -173,9 +174,9 @@ export default function Header() {
                           </Link>
                         </li>
                       </ul>
-                      
+
                       <div className="user-dropdown-divider"></div>
-                      
+
                       <button className="user-dropdown-logout" onClick={handleLogout}>
                         <i className="fa-solid fa-right-from-bracket"></i>
                         <span>Đăng xuất</span>

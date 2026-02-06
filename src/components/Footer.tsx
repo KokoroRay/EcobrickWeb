@@ -1,10 +1,12 @@
+import { getAssetPath } from '../utils/assets';
+
 export default function Footer() {
   return (
     <footer className="footer">
       <div className="footer-container">
         <div className="footer-about">
           <img
-            src={`${import.meta.env.BASE_URL}LogoEBwhile.png`}
+            src={getAssetPath('LogoEBwhile.png')}
             alt="Ecobrick Logo"
             className="footer-logo"
           />
