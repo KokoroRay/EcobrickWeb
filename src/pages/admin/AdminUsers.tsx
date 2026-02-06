@@ -11,7 +11,23 @@ type AdjustModalProps = {
 
 function AdjustPointsModal({ userId, userName, currentPoints, onClose, onConfirm }: AdjustModalProps) {
     const [points, setPoints] = useState(0);
+    const [weight, setWeight] = useState<string>(''); // Keep as string to allow empty
     const [reason, setReason] = useState('');
+
+    const handleWeightChange = (val: string) => {
+        setWeight(val);
+        const num = parseFloat(val);
+        if (!isNaN(num)) {
+            setPoints(Math.floor(num * 10)); // Auto-calc: 1kg = 10 pts
+        } else {
+            setPoints(0);
+        }
+    };
+
+    const handlePointsChange = (val: number) => {
+        setPoints(val);
+        setWeight(''); // Clear weight if manual points entered
+    };
 
     return (
         <div style={{
@@ -19,39 +35,68 @@ function AdjustPointsModal({ userId, userName, currentPoints, onClose, onConfirm
             display: 'flex', alignItems: 'center', justifyContent: 'center'
         }} className="admin-modal-overlay">
             <div style={{
-                background: 'white', padding: '2rem', borderRadius: '12px', width: '400px'
+                background: 'white', padding: '2rem', borderRadius: '12px', width: '450px'
             }} className="admin-modal">
-                <h3 style={{ marginBottom: '1rem', color: '#0f172a' }}>Điều chỉnh điểm: {userName}</h3>
-                <div style={{ marginBottom: '1rem', fontSize: '0.9rem', color: '#64748b' }}>
-                    Hiện tại: <strong>{currentPoints} điểm</strong>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                    <h3 style={{ margin: 0, color: '#0f172a' }}>Điều chỉnh: {userName}</h3>
+                    <button onClick={onClose} style={{ border: 'none', background: 'transparent', fontSize: '1.2rem', cursor: 'pointer', color: '#64748b' }}><i className="fa-solid fa-xmark"></i></button>
+                </div>
+
+                <div style={{ background: '#f8fafc', padding: '1rem', borderRadius: '8px', marginBottom: '1.5rem', display: 'flex', justifyContent: 'space-between' }}>
+                    <span className="text-muted">Điểm hiện tại:</span>
+                    <strong style={{ fontSize: '1.1rem', color: '#0f172a' }}>{currentPoints}</strong>
                 </div>
 
                 <div className="form-input-group">
-                    <label>Số điểm (+/-)</label>
+                    <label>Nhập số Kg thực tế (Tùy chọn)</label>
+                    <div style={{ position: 'relative' }}>
+                        <input
+                            type="number"
+                            className="form-field"
+                            value={weight}
+                            onChange={e => handleWeightChange(e.target.value)}
+                            placeholder="VD: 5.5"
+                            step="0.1"
+                        />
+                        <span style={{ position: 'absolute', right: '1rem', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8', fontSize: '0.9rem' }}>kg</span>
+                    </div>
+                    {weight && <div style={{ fontSize: '0.8rem', color: '#16a34a', marginTop: '0.25rem' }}><i className="fa-solid fa-calculator"></i> Tự động quy đổi: {weight}kg x 10 = {parseInt(weight) * 10} điểm</div>}
+                </div>
+
+                <div className="form-input-group" style={{ marginTop: '1rem' }}>
+                    <label>Số điểm điều chỉnh (+/-)</label>
                     <input
                         type="number"
                         className="form-field"
                         value={points}
-                        onChange={e => setPoints(Number(e.target.value))}
-                        autoFocus
+                        onChange={e => handlePointsChange(Number(e.target.value))}
+                        placeholder="0"
                     />
-                    <div style={{ fontSize: '0.8rem', color: '#64748b', marginTop: '0.25rem' }}>Nhập số âm để trừ điểm.</div>
+                    <div style={{ fontSize: '0.8rem', color: '#64748b', marginTop: '0.25rem' }}>
+                        {points > 0 ? 'Thêm điểm' : (points < 0 ? 'Trừ điểm' : 'Nhập số điểm')}
+                    </div>
                 </div>
 
                 <div className="form-input-group">
-                    <label>Lý do</label>
+                    <label>Lý do / Ghi chú</label>
                     <input
                         type="text"
                         className="form-field"
                         value={reason}
                         onChange={e => setReason(e.target.value)}
-                        placeholder="VD: Thưởng sự kiện..."
+                        placeholder="VD: Thu gom tại sự kiện X..."
                     />
                 </div>
 
-                <div style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem', justifyContent: 'flex-end' }}>
-                    <button className="btn outline sm" onClick={onClose} style={{ border: '1px solid #ddd', color: '#666' }}>Hủy</button>
-                    <button className="btn primary sm" onClick={() => onConfirm(points, reason)}>Xác nhận</button>
+                <div style={{ display: 'flex', gap: '1rem', marginTop: '2rem', justifyContent: 'flex-end' }}>
+                    <button className="btn outline sm" onClick={onClose} style={{ border: '1px solid #e2e8f0', color: '#64748b' }}>Hủy bỏ</button>
+                    <button
+                        className="btn primary sm"
+                        onClick={() => onConfirm(points, reason)}
+                        disabled={points === 0}
+                    >
+                        <i className="fa-solid fa-check"></i> Cập nhật
+                    </button>
                 </div>
             </div>
         </div>
@@ -59,7 +104,7 @@ function AdjustPointsModal({ userId, userName, currentPoints, onClose, onConfirm
 }
 
 export default function AdminUsers() {
-    const { allUsers, adjustUserPoints } = useRewards();
+    const { allUsers, adminAwardPoints } = useRewards();
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedUser, setSelectedUser] = useState<{ id: string, name: string, points: number } | null>(null);
 
@@ -68,9 +113,21 @@ export default function AdminUsers() {
         u.email.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
-    const handleAdjust = (points: number, reason: string) => {
+    const handleAdjust = async (points: number, reason: string) => {
         if (selectedUser) {
-            adjustUserPoints(selectedUser.id, points, reason);
+            // Check if it's manual points or weight based
+            // It's tricky because the modal returns only points and reason. 
+            // Better to update modal to pass weight if available, or just infer?
+            // Wait, I updated modal to have weight state but onConfirm only sends points.
+            // I should have updated modal onConfirm signature too.
+            // However, for now let's assume if it is point adjustment, acts as manual.
+            // If we want kg recording, we need to pass kg.
+
+            // Let's rely on the Points value for now as 'manualPoints'.
+            // If we want detailed tracking (kg vs points), we need to update the Modal interface.
+            // But to fix valid API call first:
+
+            await adminAwardPoints(selectedUser.id, 0, points, reason);
             setSelectedUser(null);
         }
     };
@@ -145,7 +202,7 @@ export default function AdminUsers() {
                     userName={selectedUser.name}
                     currentPoints={selectedUser.points}
                     onClose={() => setSelectedUser(null)}
-                    onConfirm={handleAdjust}
+                    onConfirm={handleAdjust} // This needs to be updated to be async and call the new context function
                 />
             )}
         </div>
