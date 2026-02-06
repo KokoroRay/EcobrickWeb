@@ -137,8 +137,14 @@ export function RewardsProvider({ children }: { children: ReactNode }) {
         }
 
         // 2. Call API
-        // NOTE: Replace this URL with the real one from SAM outputs when available
-        const API_URL = import.meta.env.VITE_API_URL || 'https://YOUR_API_ID.execute-api.ap-southeast-1.amazonaws.com/Prod/donate';
+        // 2. Call API
+        const API_URL = import.meta.env.VITE_API_URL;
+
+        if (!API_URL) {
+          console.error("VITE_API_URL is missing in .env");
+          alert("Lỗi cấu hình hệ thống: Thiếu API URL.");
+          return false;
+        }
 
         // Attempting API call - in a real scenario this would be the primary action
         // For development/demo without a real backend URL reachable, we might fallback or fail.
