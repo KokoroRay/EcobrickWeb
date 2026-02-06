@@ -2578,65 +2578,64 @@ body {
     transform: rotate(360deg);
   }
 }
- / *   P r o d u c t   D e t a i l   P r e m i u m   E n h a n c e m e n t s   * / 
- . p r o d u c t - p a g e   { 
-     p a d d i n g - t o p :   6 r e m ; 
- } 
- 
- . p r o d u c t - d e t a i l e d - c o n t e n t   h 3   { 
-         f o n t - s i z e :   1 . 5 r e m ; 
-         c o l o r :   # 1 e 2 9 3 b ; 
-         m a r g i n - b o t t o m :   1 r e m ; 
-         f o n t - w e i g h t :   7 0 0 ; 
- } 
- 
- . p r o d u c t - f e a t u r e - p i l l   { 
-         d i s p l a y :   i n l i n e - f l e x ; 
-         a l i g n - i t e m s :   c e n t e r ; 
-         g a p :   0 . 5 r e m ; 
-         b a c k g r o u n d :   # f 0 f d f 4 ; 
-         c o l o r :   # 1 6 6 5 3 4 ; 
-         p a d d i n g :   0 . 5 r e m   1 r e m ; 
-         b o r d e r - r a d i u s :   9 9 p x ; 
-         f o n t - s i z e :   0 . 8 7 5 r e m ; 
-         f o n t - w e i g h t :   6 0 0 ; 
- } 
- 
- . p r o d u c t - s p e c - t a b l e   { 
-         b o r d e r - c o l l a p s e :   c o l l a p s e ; 
-         w i d t h :   1 0 0 % ; 
- } 
- 
- . p r o d u c t - s p e c - t a b l e   t d   { 
-         p a d d i n g :   0 . 7 5 r e m   0 ; 
-         b o r d e r - b o t t o m :   1 p x   s o l i d   # e 2 e 8 f 0 ; 
- } 
- 
- . p r o d u c t - s p e c - t a b l e   t d : f i r s t - c h i l d   { 
-         c o l o r :   # 6 4 7 4 8 b ; 
-         w i d t h :   4 0 % ; 
- } 
- 
- . p r o d u c t - s p e c - t a b l e   t d : l a s t - c h i l d   { 
-         c o l o r :   # 3 3 4 1 5 5 ; 
-         f o n t - w e i g h t :   5 0 0 ; 
-         t e x t - a l i g n :   r i g h t ; 
- } 
- 
- . r e l a t e d - c a r d - l i n k : h o v e r   . c a r d   { 
-         t r a n s f o r m :   t r a n s l a t e Y ( - 5 p x ) ; 
-         b o x - s h a d o w :   0   1 0 p x   3 0 p x   r g b a ( 0 , 0 , 0 , 0 . 1 ) ; 
- } 
- 
- . b a d g e - d i s c o u n t   { 
-     b a c k g r o u n d :   # D C 2 6 2 6 ; 
-     c o l o r :   w h i t e ; 
-     p a d d i n g :   0 . 2 r e m   0 . 6 r e m ; 
-     b o r d e r - r a d i u s :   4 p x ; 
-     f o n t - s i z e :   0 . 7 5 r e m ; 
-     f o n t - w e i g h t :   7 0 0 ; 
-     m a r g i n - r i g h t :   0 . 5 r e m ; 
-     t e x t - t r a n s f o r m :   u p p e r c a s e ; 
- } 
-  
- 
+
+/* Product Detail Premium Enhancements */
+.product-page {
+  padding-top: 6rem;
+}
+
+.product-detailed-content h3 {
+  font-size: 1.5rem;
+  color: #1e293b;
+  margin-bottom: 1rem;
+  font-weight: 700;
+}
+
+.product-feature-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #f0fdf4;
+  color: #166534;
+  padding: 0.5rem 1rem;
+  border-radius: 99px;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.product-spec-table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.product-spec-table td {
+  padding: 0.75rem 0;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.product-spec-table td:first-child {
+  color: #64748b;
+  width: 40%;
+}
+
+.product-spec-table td:last-child {
+  color: #334155;
+  font-weight: 500;
+  text-align: right;
+}
+
+.related-card-link:hover .card {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+.badge-discount {
+  background: #DC2626;
+  color: white;
+  padding: 0.2rem 0.6rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  margin-right: 0.5rem;
+  text-transform: uppercase;
+}
