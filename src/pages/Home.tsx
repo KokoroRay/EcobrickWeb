@@ -42,7 +42,7 @@ export default function Home() {
           </div>
         </div>
         <div className="hero-right">
-          <img src="/EcobrichWeb/images/banner.jpg" alt="Gạch lát từ rác nhựa" loading="lazy" />
+          <img src="/EcobrickWeb/images/banner.jpg" alt="Gạch lát từ rác nhựa" loading="lazy" />
         </div>
       </section>
 

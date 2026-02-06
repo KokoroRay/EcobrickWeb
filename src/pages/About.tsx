@@ -43,7 +43,7 @@ export default function About() {
             </p>
           </div>
           <div className="about-image slide-right">
-            <img src="/EcobrichWeb/images/banner.jpg" alt="Ecobrick giới thiệu" loading="lazy" />
+            <img src="/EcobrickWeb/images/banner.jpg" alt="Ecobrick giới thiệu" loading="lazy" />
           </div>
         </div>
       </section>
@@ -52,7 +52,7 @@ export default function About() {
       <section className="vision-section section-light">
         <div className="vision-container">
           <div className="vision-image slide-left">
-            <img src="/EcobrichWeb/images/ecoterrazzo-panel.jpg" alt="Tầm nhìn Ecobrick" loading="lazy" />
+            <img src="/EcobrickWeb/images/ecoterrazzo-panel.jpg" alt="Tầm nhìn Ecobrick" loading="lazy" />
           </div>
           <div className="vision-text slide-right">
             <h2 className="section-title left">TẦM NHÌN</h2>
