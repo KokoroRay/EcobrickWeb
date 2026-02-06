@@ -10,9 +10,11 @@ if (!rootElement) {
   throw new Error('Root element not found');
 }
 
+const basename = import.meta.env.VITE_BASE_PATH || '/EcobrickWeb/';
+
 createRoot(rootElement).render(
   <StrictMode>
-    <BrowserRouter>
+    <BrowserRouter basename={basename}>
       <App />
     </BrowserRouter>
   </StrictMode>,

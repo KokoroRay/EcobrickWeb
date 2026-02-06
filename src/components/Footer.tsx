@@ -1,10 +1,12 @@
+import { getAssetPath } from '../utils/assets';
+
 export default function Footer() {
   return (
     <footer className="footer">
       <div className="footer-container">
         <div className="footer-about">
           <img
-            src={`${import.meta.env.BASE_URL}Logo%20EB%20tr%E1%BA%AFng.png`}
+            src={getAssetPath('LogoEBwhile.png')}
             alt="Ecobrick Logo"
             className="footer-logo"
           />
@@ -41,7 +43,7 @@ export default function Footer() {
       </div>
 
       <div className="footer-bottom">
-        <p>© 2025 Ecobrick. All rights reserved. Thiết kế và phát triển bởi Ecobrick Team.</p>
+        <p>© 2026 Ecobrick. All rights reserved. Thiết kế và phát triển bởi Ecobrick Team.</p>
       </div>
     </footer>
   );

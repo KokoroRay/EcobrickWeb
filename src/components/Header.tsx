@@ -1,11 +1,46 @@
-import { NavLink, Link } from 'react-router-dom';
-import { useState } from 'react';
+import { NavLink, Link, useNavigate } from 'react-router-dom';
+import { useState, useEffect, useRef } from 'react';
+import { useAuth } from '../context/AuthContext';
+import { getAssetPath } from '../utils/assets';
 
 const navLinkClass = ({ isActive }: { isActive: boolean }) =>
   `navbar-link${isActive ? ' active' : ''}`;
 
 export default function Header() {
   const [query, setQuery] = useState('');
+  const [showDropdown, setShowDropdown] = useState(false);
+  const { isAuthenticated, user, userAttributes, logout, role } = useAuth();
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setShowDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleLogout = async () => {
+    await logout();
+    setShowDropdown(false);
+    navigate('/');
+  };
+
+  const getInitials = () => {
+    if (userAttributes?.name) {
+      const names = userAttributes.name.split(' ');
+      return names.map((n: string) => n[0]).join('').toUpperCase().slice(0, 2);
+    }
+    if (userAttributes?.email) {
+      return userAttributes.email[0].toUpperCase();
+    }
+    return user?.username?.[0]?.toUpperCase() || 'U';
+  };
 
   return (
     <header className="header" data-header>
@@ -13,7 +48,7 @@ export default function Header() {
         <div className="overlay" data-overlay></div>
         <Link to="/" className="logo">
           <img
-            src={`${import.meta.env.BASE_URL}LogoEBcolor.png`}
+            src={getAssetPath('LogoEBcolor.png')}
             width={60}
             height={60}
             alt="Ecobrick logo"
@@ -58,20 +93,16 @@ export default function Header() {
                 Liên hệ
               </NavLink>
             </li>
-            <li className="navbar-item">
-              <NavLink to="/how-it-works" className={navLinkClass}>
-                Cách thức hoạt động
-              </NavLink>
-            </li>
-            <li className="navbar-item">
-              <NavLink to="/rewards" className={navLinkClass}>
-                Điểm & Ưu đãi
-              </NavLink>
-            </li>
-            <li className="navbar-item">
-              <NavLink to="/admin" className={navLinkClass}>
-                Admin
-              </NavLink>
+            <li className="navbar-item dropdown">
+              <span className="navbar-link">Cách thức hoạt động</span>
+              <ul className="dropdown-menu">
+                <li>
+                  <Link to="/how-it-works">Cách thức hoạt động</Link>
+                </li>
+                <li>
+                  <Link to="/rewards">Điểm & Ưu đãi</Link>
+                </li>
+              </ul>
             </li>
           </ul>
 
@@ -97,10 +128,76 @@ export default function Header() {
               </div>
             </li>
             <li>
-              <NavLink to="/login" className="nav-action-btn">
-                <i className="fa-solid fa-user" aria-hidden="true"></i>
-                <span className="nav-action-text">Đăng nhập</span>
-              </NavLink>
+              {isAuthenticated ? (
+                <div className="user-menu" ref={dropdownRef}>
+                  <button
+                    className="user-avatar-btn"
+                    onClick={() => setShowDropdown(!showDropdown)}
+                    aria-label="User menu"
+                  >
+                    <div className="user-avatar">
+                      {getInitials()}
+                    </div>
+                  </button>
+
+                  {showDropdown && (
+                    <div className="user-dropdown">
+                      <div className="user-dropdown-header">
+                        <div className="user-avatar large">
+                          {getInitials()}
+                        </div>
+                        <div className="user-info">
+                          <div className="user-name">{userAttributes?.name || user?.username}</div>
+                          <div className="user-email">{userAttributes?.email}</div>
+                        </div>
+                      </div>
+
+                      <div className="user-dropdown-divider"></div>
+
+                      <ul className="user-dropdown-menu">
+                        {role === 'admin' && (
+                          <li>
+                            <Link to="/admin" onClick={() => setShowDropdown(false)}>
+                              <i className="fa-solid fa-user-shield"></i>
+                              <span>Trang quản trị</span>
+                            </Link>
+                          </li>
+                        )}
+                        <li>
+                          <Link to="/rewards" onClick={() => setShowDropdown(false)}>
+                            <i className="fa-solid fa-gift"></i>
+                            <span>Điểm thưởng</span>
+                          </Link>
+                        </li>
+                        <li>
+                          <Link to="/vouchers" onClick={() => setShowDropdown(false)}>
+                            <i className="fa-solid fa-ticket"></i>
+                            <span>Voucher của tôi</span>
+                          </Link>
+                        </li>
+                        <li>
+                          <Link to="/redeem" onClick={() => setShowDropdown(false)}>
+                            <i className="fa-solid fa-trophy"></i>
+                            <span>Đổi quà</span>
+                          </Link>
+                        </li>
+                      </ul>
+
+                      <div className="user-dropdown-divider"></div>
+
+                      <button className="user-dropdown-logout" onClick={handleLogout}>
+                        <i className="fa-solid fa-right-from-bracket"></i>
+                        <span>Đăng xuất</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <NavLink to="/login" className="nav-action-btn">
+                  <i className="fa-solid fa-user" aria-hidden="true"></i>
+                  <span className="nav-action-text">Đăng nhập</span>
+                </NavLink>
+              )}
             </li>
           </ul>
         </nav>
