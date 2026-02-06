@@ -7,6 +7,7 @@ import {
   useState,
   type ReactNode,
 } from 'react';
+import { fetchAuthSession } from 'aws-amplify/auth';
 import type { RedeemOption, RewardHistoryEntry, RewardsConfig, UserRewardProfile, Voucher } from '../types/rewards';
 import { defaultRedeemOptions, initialVouchers } from '../data/rewards';
 import { useAuth } from './AuthContext';
@@ -54,7 +55,7 @@ type RewardsState = {
   availableVouchers: Voucher[];
 
   // Actions
-  addDonation: (kg: number, note?: string) => void;
+  addDonation: (kg: number, note?: string) => Promise<boolean>;
   redeemOption: (option: RedeemOption) => { success: boolean; message: string };
   updatePointsPerKg: (value: number) => void;
   addVoucher: (voucher: Omit<Voucher, 'id' | 'status'>) => void;
@@ -119,33 +120,84 @@ export function RewardsProvider({ children }: { children: ReactNode }) {
   const claimedVouchers = userProfile?.claimedVouchers || [];
 
   const addDonation = useCallback(
-    (kg: number, note = 'Quyên góp nhựa tại điểm thu gom') => {
-      if (!isAuthenticated || !currentUserId) return;
+    async (kg: number, note = 'Quyên góp nhựa tại điểm thu gom') => {
+      if (!isAuthenticated || !currentUserId) {
+        alert("Vui lòng đăng nhập để thực hiện.");
+        return false;
+      }
 
-      const earned = kg * config.pointsPerKg;
-      const newEntry: RewardHistoryEntry = {
-        id: `history-${Date.now()}`,
-        userId: currentUserId,
-        type: 'donate',
-        kg,
-        points: earned, // Points to be added upon approval
-        note,
-        status: 'pending', // IMPORTANT: Pending by default
-        createdAt: new Date().toISOString().slice(0, 10),
-      };
+      try {
+        // 1. Get Token
+        const session = await fetchAuthSession();
+        const token = session.tokens?.idToken?.toString();
 
-      setUsersDb(prev => {
-        const profile = prev[currentUserId];
-        if (!profile) return prev;
-        return {
-          ...prev,
-          [currentUserId]: {
-            ...profile,
-            history: [newEntry, ...profile.history],
-            // totalKg and points do NOT increase yet
-          }
+        if (!token) {
+          alert("Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.");
+          return false;
+        }
+
+        // 2. Call API
+        // NOTE: Replace this URL with the real one from SAM outputs when available
+        const API_URL = import.meta.env.VITE_API_URL || 'https://YOUR_API_ID.execute-api.ap-southeast-1.amazonaws.com/Prod/donate';
+
+        // Attempting API call - in a real scenario this would be the primary action
+        // For development/demo without a real backend URL reachable, we might fallback or fail.
+        // Here we simulate a real call structure.
+
+        /* 
+           Uncomment this block when API is ready to test connectivity
+           
+        const response = await fetch(API_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': token
+          },
+          body: JSON.stringify({ amount: kg })
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.message || 'API Error');
+        */
+
+        // --- SIMULATION / HYBRID MODE ---
+        // Since we might not have the API running yet, we continue to use the local logic 
+        // effectively simulating a successful API call for the UI.
+        // In production, the above fetch block would be the only source of truth.
+
+        console.log("Mocking API Call to:", API_URL, "with token:", token?.slice(0, 10) + "...");
+        await new Promise(resolve => setTimeout(resolve, 800)); // Simulate net delay
+
+        const earned = kg * config.pointsPerKg;
+        const newEntry: RewardHistoryEntry = {
+          id: `history-${Date.now()}`,
+          userId: currentUserId,
+          type: 'donate',
+          kg,
+          points: earned,
+          note,
+          status: 'pending',
+          createdAt: new Date().toISOString().slice(0, 10),
         };
-      });
+
+        setUsersDb(prev => {
+          const profile = prev[currentUserId];
+          if (!profile) return prev;
+          return {
+            ...prev,
+            [currentUserId]: {
+              ...profile,
+              history: [newEntry, ...profile.history],
+            }
+          };
+        });
+
+        return true;
+
+      } catch (error) {
+        console.error("Donation Error:", error);
+        alert("Có lỗi xảy ra khi gửi yêu cầu.");
+        return false;
+      }
     },
     [config.pointsPerKg, currentUserId, isAuthenticated]
   );
@@ -207,7 +259,7 @@ export function RewardsProvider({ children }: { children: ReactNode }) {
       if (entryIndex === -1) return prev;
 
       const entry = profile.history[entryIndex];
-      if (entry.status !== 'pending') return prev; // Validated status change only from pending
+      // Allow modifying refined items just in case, but usually pending only
 
       const updatedEntry = { ...entry, status: newStatus };
       const updatedHistory = [...profile.history];
@@ -216,9 +268,15 @@ export function RewardsProvider({ children }: { children: ReactNode }) {
       let newPoints = profile.points;
       let newTotalKg = profile.totalKg;
 
-      if (newStatus === 'approved') {
+      // Logic: If moving TO approved, add. If moving FROM approved (e.g. undo), subtract?
+      // For simplicity, we assume one-way flow for now or strict 'pending' check in robust systems.
+      if (entry.status === 'pending' && newStatus === 'approved') {
         newPoints += (entry.points || 0);
         newTotalKg += (entry.kg || 0);
+      } else if (entry.status === 'approved' && newStatus === 'rejected') {
+        // Revert points if rejected after approval
+        newPoints -= (entry.points || 0);
+        newTotalKg -= (entry.kg || 0);
       }
 
       return {
@@ -275,7 +333,6 @@ export function RewardsProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const refreshData = () => {
-    // Re-read from local storage if needed, mainly for cross-tab, but simple strict mode reload handles it usually.
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) setUsersDb(JSON.parse(stored));
   };

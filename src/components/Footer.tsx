@@ -43,7 +43,7 @@ export default function Footer() {
       </div>
 
       <div className="footer-bottom">
-        <p>© 2025 Ecobrick. All rights reserved. Thiết kế và phát triển bởi Ecobrick Team.</p>
+        <p>© 2026 Ecobrick. All rights reserved. Thiết kế và phát triển bởi Ecobrick Team.</p>
       </div>
     </footer>
   );

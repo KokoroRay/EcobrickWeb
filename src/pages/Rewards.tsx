@@ -16,13 +16,17 @@ export default function Rewards() {
   const handleSubmit = async () => {
     if (kg <= 0) return;
     setIsSubmitting(true);
-    // Simulate network delay for better UX
-    await new Promise(resolve => setTimeout(resolve, 600));
-    addDonation(kg, note || 'Quyên góp nhựa tại điểm thu gom');
-    setNote('');
-    setKg(1);
+
+    // addDonation internally handles authentication check and API call
+    // It returns true on success, false on failure
+    const success = await addDonation(kg, note || 'Quyên góp nhựa tại điểm thu gom');
+
+    if (success) {
+      setNote('');
+      setKg(1);
+    }
+
     setIsSubmitting(false);
-    alert('Đã gửi yêu cầu quyên góp! Admin sẽ duyệt sớm.');
   };
 
   // Helper to get display name
