@@ -9,7 +9,7 @@ const navLinkClass = ({ isActive }: { isActive: boolean }) =>
 export default function Header() {
   const [query, setQuery] = useState('');
   const [showDropdown, setShowDropdown] = useState(false);
-  const { isAuthenticated, user, userAttributes, logout } = useAuth();
+  const { isAuthenticated, user, userAttributes, logout, role } = useAuth();
   const dropdownRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
@@ -155,6 +155,14 @@ export default function Header() {
                       <div className="user-dropdown-divider"></div>
 
                       <ul className="user-dropdown-menu">
+                        {role === 'admin' && (
+                          <li>
+                            <Link to="/admin" onClick={() => setShowDropdown(false)}>
+                              <i className="fa-solid fa-user-shield"></i>
+                              <span>Trang quản trị</span>
+                            </Link>
+                          </li>
+                        )}
                         <li>
                           <Link to="/rewards" onClick={() => setShowDropdown(false)}>
                             <i className="fa-solid fa-gift"></i>

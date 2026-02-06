@@ -1,9 +1,11 @@
 export type RewardHistoryEntry = {
   id: string;
-  type: 'donate' | 'redeem';
+  userId?: string; // Optional for backward compatibility, but should be used
+  type: 'donate' | 'redeem' | 'admin_adjust';
   kg?: number;
   points: number;
   note: string;
+  status?: 'pending' | 'approved' | 'rejected'; // For donation orders
   createdAt: string;
 };
 
@@ -28,4 +30,14 @@ export type RedeemOption = {
 export type RewardsConfig = {
   pointsPerKg: number;
   tiers: RedeemOption[];
+};
+
+export type UserRewardProfile = {
+  id: string;
+  name: string;
+  email: string;
+  points: number;
+  totalKg: number;
+  history: RewardHistoryEntry[];
+  claimedVouchers: Voucher[];
 };

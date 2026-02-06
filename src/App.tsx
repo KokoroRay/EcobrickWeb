@@ -36,29 +36,35 @@ Amplify.configure({
       region: import.meta.env.VITE_AWS_REGION,
       ...(cognitoDomain && redirectSignIn && redirectSignOut
         ? {
-            loginWith: {
-              oauth: {
-                domain: cognitoDomain,
-                scopes: ['email', 'openid', 'profile'],
-                redirectSignIn: [redirectSignIn],
-                redirectSignOut: [redirectSignOut],
-                responseType: 'code',
-              },
+          loginWith: {
+            oauth: {
+              domain: cognitoDomain,
+              scopes: ['email', 'openid', 'profile'],
+              redirectSignIn: [redirectSignIn],
+              redirectSignOut: [redirectSignOut],
+              responseType: 'code',
             },
-          }
+          },
+        }
         : {}),
     }
   }
 });
 
+// ... imports
+import { useLocation } from 'react-router-dom';
+
 export default function App() {
+  const location = useLocation();
+  const isAdminRoute = location.pathname.startsWith('/admin');
+
   return (
     <AuthProvider>
       <ToastProvider>
         <RewardsProvider>
           <div className="app">
-            <Header />
-            <main className="main">
+            {!isAdminRoute && <Header />}
+            <main className={isAdminRoute ? '' : 'main'}>
               <Routes>
                 <Route path="/" element={<Home />} />
                 <Route path="/about" element={<About />} />
@@ -70,20 +76,20 @@ export default function App() {
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
                 <Route path="/forgot-password" element={<ForgotPassword />} />
-                
+
                 {/* Test Role - Kiểm tra role & token */}
                 <Route path="/test-role" element={<ProtectedRoute><TestRole /></ProtectedRoute>} />
-                
+
                 {/* Protected Routes - Yêu cầu đăng nhập */}
                 <Route path="/rewards" element={<ProtectedRoute><Rewards /></ProtectedRoute>} />
                 <Route path="/redeem" element={<ProtectedRoute><Redeem /></ProtectedRoute>} />
                 <Route path="/vouchers" element={<ProtectedRoute><Vouchers /></ProtectedRoute>} />
-                
+
                 {/* Admin Routes - Yêu cầu đăng nhập + role admin */}
                 <Route path="/admin" element={<AdminRoute><Admin /></AdminRoute>} />
               </Routes>
             </main>
-            <Footer />
+            {!isAdminRoute && <Footer />}
           </div>
         </RewardsProvider>
       </ToastProvider>

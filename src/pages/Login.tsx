@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { signIn, signInWithRedirect } from 'aws-amplify/auth';
+import { signIn, signInWithRedirect, fetchAuthSession } from 'aws-amplify/auth';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 
@@ -10,7 +10,7 @@ export default function Login() {
   const successMessage = location.state?.message;
   const { checkAuth } = useAuth();
   const { showToast } = useToast();
-  
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -21,7 +21,7 @@ export default function Login() {
     event.preventDefault();
     setError('');
     setIsSubmitting(true);
-    
+
     const normalizedEmail = email.trim().toLowerCase();
 
     if (!normalizedEmail || !password) {
@@ -33,16 +33,26 @@ export default function Login() {
     try {
       await signIn({ username: normalizedEmail, password });
       await checkAuth(); // Update auth state
-      showToast('Đăng nhập thành công! Chào mừng bạn quay trở lại.', 'success');
-      navigate('/rewards');
+
+      // Check role to redirect
+      const session = await fetchAuthSession();
+      const groups = (session.tokens?.idToken?.payload['cognito:groups'] || session.tokens?.accessToken?.payload['cognito:groups'] || []) as string[];
+
+      if (groups.includes('admin')) {
+        showToast('Xin chào Admin! Đang chuyển hướng...', 'success');
+        navigate('/admin');
+      } else {
+        showToast('Đăng nhập thành công! Chào mừng bạn quay trở lại.', 'success');
+        navigate('/rewards');
+      }
     } catch (err) {
       console.error('Login error:', err);
-      
+
       // Parse error từ AWS Cognito
       const errorName = typeof err === 'object' && err !== null && 'name' in err
         ? String((err as { name?: string }).name)
         : '';
-      
+
       if (errorName === 'UserNotConfirmedException') {
         setError('❌ Tài khoản chưa được xác thực. Vui lòng kiểm tra email và nhập mã xác nhận để kích hoạt tài khoản.');
         // Redirect to register page to confirm
@@ -90,11 +100,11 @@ export default function Login() {
             <p className="login-desc">Đăng nhập để theo dõi điểm thưởng và đổi ưu đãi</p>
 
             {successMessage && (
-              <div style={{ 
-                padding: '1rem', 
-                background: '#d4edda', 
-                color: '#155724', 
-                borderRadius: '8px', 
+              <div style={{
+                padding: '1rem',
+                background: '#d4edda',
+                color: '#155724',
+                borderRadius: '8px',
                 marginBottom: '1rem',
                 border: '1px solid #c3e6cb'
               }}>
@@ -144,9 +154,9 @@ export default function Login() {
               </div>
 
               {error && (
-                <p className="auth-error" style={{ 
-                  padding: '0.75rem', 
-                  background: '#f8d7da', 
+                <p className="auth-error" style={{
+                  padding: '0.75rem',
+                  background: '#f8d7da',
                   color: '#721c24',
                   borderRadius: '8px',
                   marginBottom: '1rem',

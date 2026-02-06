@@ -24,15 +24,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const getUserRole = async (): Promise<string | null> => {
     try {
       const session = await fetchAuthSession();
-      const groups = session.tokens?.idToken?.payload['cognito:groups'] as string[] | undefined;
-      
-      if (groups && groups.includes('admin')) {
+      const idTokenGroups = session.tokens?.idToken?.payload['cognito:groups'] as string[] | undefined;
+      const accessTokenGroups = session.tokens?.accessToken?.payload['cognito:groups'] as string[] | undefined;
+
+      const groups = idTokenGroups || accessTokenGroups || [];
+
+      console.log('User Groups Found:', groups);
+
+      if (groups.includes('admin')) {
         return 'admin';
       }
-      if (groups && groups.includes('user')) {
-        return 'user';
-      }
-      return 'user'; // Mặc định là user nếu không có group
+      return 'user';
     } catch (error) {
       console.error('Lỗi lấy role:', error);
       return null;
@@ -44,7 +46,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const currentUser = await getCurrentUser();
       const attributes = await fetchUserAttributes();
       const userRole = await getUserRole();
-      
+
       setUser(currentUser);
       setUserAttributes(attributes);
       setRole(userRole);
