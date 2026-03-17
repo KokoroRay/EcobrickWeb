@@ -3,12 +3,11 @@ import {
   useCallback,
   useContext,
   useEffect,
-  useMemo,
   useState,
   type ReactNode,
 } from 'react';
 import { fetchAuthSession } from 'aws-amplify/auth';
-import type { RedeemOption, RewardHistoryEntry, RewardsConfig, UserRewardProfile, Voucher } from '../types/rewards';
+import type { AdminPendingDonation, RedeemOption, RewardHistoryEntry, RewardsConfig, UserRewardProfile, Voucher } from '../types/rewards';
 import { defaultRedeemOptions } from '../data/rewards';
 import { useAuth } from './AuthContext';
 
@@ -21,6 +20,7 @@ type RewardsState = {
   points: number;
   history: RewardHistoryEntry[];
   claimedVouchers: Voucher[];
+  pendingDonations: AdminPendingDonation[];
 
   allUsers: UserRewardProfile[];
 
@@ -35,7 +35,7 @@ type RewardsState = {
   deleteVoucher: (id: string) => void; // TODO: API
   editVoucher: (voucher: Voucher) => void; // TODO: API
 
-  updateDonationStatus: (userId: string, entryId: string, status: 'approved' | 'rejected') => void;
+  reviewDonationRequest: (userId: string, entryId: string, status: 'approved' | 'rejected') => Promise<boolean>;
   adjustUserPoints: (userId: string, points: number, reason: string) => void;
   adminAwardPoints: (targetUserId: string, amountKg: number, manualPoints?: number, note?: string) => Promise<boolean>;
   refreshData: () => void;
@@ -59,6 +59,7 @@ export function RewardsProvider({ children }: { children: ReactNode }) {
 
   const [availableVouchers, setAvailableVouchers] = useState<Voucher[]>([]);
   const [loadingVouchers, setLoadingVouchers] = useState(false);
+  const [pendingDonations, setPendingDonations] = useState<AdminPendingDonation[]>([]);
 
   const [config, setConfig] = useState<RewardsConfig>({
     pointsPerKg: 10,
@@ -183,12 +184,6 @@ export function RewardsProvider({ children }: { children: ReactNode }) {
     }
   }, [currentUserId, user]);
 
-  // Load vouchers on mount
-  useEffect(() => {
-    fetchVouchers();
-    fetchAllUsers();
-  }, []);
-
   // --- FETCH ALL USERS (Admin only) ---
   const fetchAllUsers = useCallback(async () => {
     try {
@@ -243,6 +238,56 @@ export function RewardsProvider({ children }: { children: ReactNode }) {
     } catch (e) {
       console.error("Fetch all users failed", e);
     }
+  }, []);
+
+  // --- FETCH PENDING DONATIONS (Admin only) ---
+  const fetchPendingDonations = useCallback(async () => {
+    try {
+      const API_BASE = getApiBase();
+      if (!API_BASE) return;
+
+      const token = await getAuthToken();
+      if (!token) return;
+
+      const res = await fetch(`${API_BASE}/admin/donations`, {
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: token,
+        },
+      });
+
+      if (!res.ok) {
+        if (res.status === 403) {
+          setPendingDonations([]);
+        }
+        return;
+      }
+
+      const data = await res.json();
+      const donations = Array.isArray(data?.donations) ? data.donations : [];
+      const mapped: AdminPendingDonation[] = donations.map((d: any) => ({
+        id: String(d.id || ''),
+        userId: String(d.user_id || ''),
+        userName: String(d.user_name || d.user_id || 'Unknown user'),
+        userEmail: String(d.user_email || ''),
+        kg: Number(d.kg || 0),
+        points: Number(d.points || 0),
+        note: String(d.note || ''),
+        status: (String(d.status || 'pending') as 'pending' | 'approved' | 'rejected'),
+        createdAt: String(d.created_at || ''),
+      }));
+
+      setPendingDonations(mapped);
+    } catch (e) {
+      console.error('Fetch pending donations failed', e);
+    }
+  }, []);
+
+  // Load admin/public data on mount
+  useEffect(() => {
+    fetchVouchers();
+    fetchAllUsers();
+    fetchPendingDonations();
   }, []);
 
 
@@ -349,47 +394,7 @@ export function RewardsProvider({ children }: { children: ReactNode }) {
 
         return { success: true, message: data.message || 'Đổi thành công!' };
       } else {
-        // --- DEV MODE FALLBACK ---
-        // If Backend says "Not enough points" but Local State has enough (due to local Admin Award), allow it.
-        const cost = (option as any).pointsRequired || 0;
-        const currentUserProfile = usersDb[currentUserId];
-        const localPoints = currentUserProfile ? currentUserProfile.points : 0;
         const rawMsg = data.message || '';
-
-        if (rawMsg === 'Not enough points' && localPoints >= cost) {
-          setUsersDb(prev => {
-            const p = prev[currentUserId];
-            if (!p) return prev;
-            return {
-              ...prev,
-              [currentUserId]: {
-                ...p,
-                points: p.points - cost,
-                claimedVouchers: [{
-                  id: `claimed-dev-${Date.now()}`,
-                  code: (option as Voucher).code || 'DEV-OFFLINE',
-                  title: option.title,
-                  discount: (option as any).discount || (option as any).benefit,
-                  pointsRequired: cost,
-                  expiresAt: 'Unknown',
-                  status: 'claimed'
-                }, ...p.claimedVouchers],
-                history: [{
-                  id: `redeem-dev-${Date.now()}`,
-                  userId: currentUserId,
-                  type: 'redeem',
-                  points: -cost,
-                  note: `Chuộc ${option.title} (Dev Mode)`,
-                  status: 'approved',
-                  createdAt: new Date().toISOString()
-                }, ...p.history]
-              }
-            }
-          });
-          return { success: true, message: 'Đổi thành công (Offline Mode)!' };
-        }
-
-        // Improve Error Messages based on Backend
         let msg = rawMsg || 'Lỗi đổi điểm';
         if (msg === 'Not enough points') {
           msg = 'Không đủ điểm trong hệ thống (Backend). Vui lòng chờ đồng bộ điểm.';
@@ -399,7 +404,7 @@ export function RewardsProvider({ children }: { children: ReactNode }) {
     } catch (e) {
       return { success: false, message: 'Lỗi kết nối' };
     }
-  }, [isAuthenticated, currentUserId, usersDb]);
+  }, [isAuthenticated, currentUserId]);
 
 
   // --- ADMIN ADD VOUCHER ---
@@ -438,49 +443,40 @@ export function RewardsProvider({ children }: { children: ReactNode }) {
   const updatePointsPerKg = (v: number) => setConfig(p => ({ ...p, pointsPerKg: v }));
   const deleteVoucher = (id: string) => { console.log("Delete not impl in Main Branch yet"); };
   const editVoucher = (v: Voucher) => { console.log("Edit not impl"); };
-  const updateDonationStatus = (userId: string, entryId: string, status: 'approved' | 'rejected') => {
-    setUsersDb(prev => {
-      const userProfile = prev[userId];
-      if (!userProfile) return prev; // User not found in local db
+  const reviewDonationRequest = useCallback(async (userId: string, entryId: string, status: 'approved' | 'rejected') => {
+    try {
+      const API_BASE = getApiBase();
+      if (!API_BASE) return false;
 
-      const historyIndex = userProfile.history.findIndex(h => h.id === entryId);
-      if (historyIndex === -1) return prev;
+      const token = await getAuthToken();
+      if (!token) return false;
 
-      const entry = userProfile.history[historyIndex];
-      // If already processed, ignore
-      if (entry.status === 'approved' || entry.status === 'rejected') return prev;
+      const res = await fetch(`${API_BASE}/admin/donations/review`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: token,
+        },
+        body: JSON.stringify({
+          user_id: userId,
+          transaction_id: entryId,
+          status,
+        }),
+      });
 
-      // Update entry
-      const updatedHistory = [...userProfile.history];
-      updatedHistory[historyIndex] = { ...entry, status };
-
-      // Update User Stats if Approved
-      let newPoints = userProfile.points;
-      let newKg = userProfile.totalKg;
-
-      if (status === 'approved') {
-        // Calculate points if not already set on entry
-        const pts = entry.points || ((entry.kg || 0) * config.pointsPerKg);
-        newPoints += pts;
-        newKg += (entry.kg || 0);
-
-        // We should ideally call the API here to persist the award in the Backend too if it matches a real user
-        // adminAwardPoints(userId, entry.kg, pts, entry.note); 
-        // But adminAwardPoints creates a new record. We just want to "Confirm" this one. 
-        // For now, Local State Update is primary for this "Manage" view.
+      if (!res.ok) {
+        return false;
       }
 
-      return {
-        ...prev,
-        [userId]: {
-          ...userProfile,
-          points: newPoints,
-          totalKg: newKg,
-          history: updatedHistory
-        }
-      };
-    });
-  };
+      setPendingDonations(prev => prev.filter((item) => !(item.userId === userId && item.id === entryId)));
+      fetchAllUsers();
+      fetchVouchers();
+      return true;
+    } catch (e) {
+      console.error('Review donation failed', e);
+      return false;
+    }
+  }, [fetchAllUsers, fetchVouchers]);
   const adjustUserPoints = (uid: string, pts: number, reason: string) => { /* ... */ };
   // --- ADMIN AWARD POINTS ---
   const adminAwardPoints = useCallback(async (targetUserId: string, amountKg: number, manualPoints?: number, note?: string) => {
@@ -504,51 +500,32 @@ export function RewardsProvider({ children }: { children: ReactNode }) {
       if (!res.ok) {
         let errorText = '';
         try { errorText = await res.text(); } catch { }
-        console.warn(`Backend award API failed (${res.status}): ${errorText}. Falling back to local update.`);
-      } else {
-        setTimeout(() => fetchVouchers(), 1500);
+        console.warn(`Backend award API failed (${res.status}): ${errorText}`);
+        return false;
       }
+
+      setTimeout(() => fetchVouchers(), 1500);
+      fetchAllUsers();
+      return true;
     } catch (e) {
-      console.error("Award API connection failed. Falling back to local update.", e);
+      console.error('Award API connection failed.', e);
+      return false;
     }
-
-    // Always update local state (Optimistic / Fallback)
-    setUsersDb(prev => {
-      const p = prev[targetUserId];
-      if (!p) return prev; // User not in local list, cannot update UI
-
-      const addedPoints = manualPoints || (amountKg * config.pointsPerKg);
-      return {
-        ...prev,
-        [targetUserId]: {
-          ...p,
-          points: (p.points || 0) + addedPoints,
-          history: [{
-            id: `admin-${Date.now()}`,
-            userId: targetUserId,
-            type: 'admin_adjust',
-            points: addedPoints, // This might be a float
-            note: note || 'Admin Award',
-            createdAt: new Date().toISOString()
-          }, ...p.history]
-        }
-      };
-    });
-    return true;
-  }, [isAuthenticated, config.pointsPerKg]);
+  }, [isAuthenticated, config.pointsPerKg, fetchAllUsers]);
 
   const refreshData = () => { 
     fetchVouchers(); 
     fetchAllUsers();
+    fetchPendingDonations();
   };
 
   return (
     <RewardsContext.Provider value={{
-      points, history, claimedVouchers, allUsers: Object.values(usersDb),
+      points, history, claimedVouchers, pendingDonations, allUsers: Object.values(usersDb),
       config, availableVouchers: availableVouchers,
       addDonation, redeemOption, updatePointsPerKg,
       addVoucher, deleteVoucher, editVoucher,
-      updateDonationStatus, adjustUserPoints, adminAwardPoints, refreshData
+      reviewDonationRequest, adjustUserPoints, adminAwardPoints, refreshData
     }}>
       {children}
     </RewardsContext.Provider>

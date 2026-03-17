@@ -41,3 +41,15 @@ export type UserRewardProfile = {
   history: RewardHistoryEntry[];
   claimedVouchers: Voucher[];
 };
+
+export type AdminPendingDonation = {
+  id: string;
+  userId: string;
+  userName: string;
+  userEmail: string;
+  kg: number;
+  points: number;
+  note: string;
+  status: 'pending' | 'approved' | 'rejected';
+  createdAt: string;
+};

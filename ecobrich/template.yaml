@@ -123,6 +123,54 @@ Resources:
     Metadata:
       BuildMethod: makefile
 
+  AdminUsersFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: .
+      Handler: bootstrap
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref PlasticDbTable
+      Events:
+        AdminUsersApi:
+          Type: Api
+          Properties:
+            RestApiId: !Ref PlasticApi
+            Path: /admin/users
+            Method: GET
+            Auth:
+              Authorizer: CognitoAuthorizer
+    Metadata:
+      BuildMethod: makefile
+
+  AdminDonationsFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: .
+      Handler: bootstrap
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref PlasticDbTable
+      Events:
+        AdminDonationsListApi:
+          Type: Api
+          Properties:
+            RestApiId: !Ref PlasticApi
+            Path: /admin/donations
+            Method: GET
+            Auth:
+              Authorizer: CognitoAuthorizer
+        AdminDonationsReviewApi:
+          Type: Api
+          Properties:
+            RestApiId: !Ref PlasticApi
+            Path: /admin/donations/review
+            Method: POST
+            Auth:
+              Authorizer: CognitoAuthorizer
+    Metadata:
+      BuildMethod: makefile
+
   VouchersFunction:
     Type: AWS::Serverless::Function
     Properties:

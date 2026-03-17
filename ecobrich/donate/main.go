@@ -47,6 +47,14 @@ func handleRequest(ctx context.Context, request events.APIGatewayProxyRequest) (
 		return response(401, "Không tìm thấy thông tin xác thực"), nil
 	}
 	userID := claims["sub"].(string) 
+	userEmail := ""
+	if email, ok := claims["email"].(string); ok {
+		userEmail = email
+	}
+	userName := userID
+	if name, ok := claims["name"].(string); ok && name != "" {
+		userName = name
+	}
 
 	// 2. Parse Body lấy số kg
 	var body RequestBody
@@ -91,6 +99,30 @@ func handleRequest(ctx context.Context, request events.APIGatewayProxyRequest) (
 	if err != nil {
 		fmt.Println("DynamoDB Error:", err)
 		return response(500, "Lỗi hệ thống khi lưu dữ liệu"), nil
+	}
+
+	// Upsert PROFILE so admin can list users even before any point approval.
+	_, err = dbClient.UpdateItem(ctx, &dynamodb.UpdateItemInput{
+		TableName: aws.String(tableName),
+		Key: map[string]types.AttributeValue{
+			"PK": &types.AttributeValueMemberS{Value: userPK},
+			"SK": &types.AttributeValueMemberS{Value: "PROFILE"},
+		},
+		UpdateExpression: aws.String("SET Email = if_not_exists(Email, :e), #nm = if_not_exists(#nm, :n), UpdatedAt = :t ADD TotalPoints :zp, TotalKg :zk"),
+		ExpressionAttributeNames: map[string]string{
+			"#nm": "Name",
+		},
+		ExpressionAttributeValues: map[string]types.AttributeValue{
+			":e":  &types.AttributeValueMemberS{Value: userEmail},
+			":n":  &types.AttributeValueMemberS{Value: userName},
+			":t":  &types.AttributeValueMemberS{Value: timestamp},
+			":zp": &types.AttributeValueMemberN{Value: "0"},
+			":zk": &types.AttributeValueMemberN{Value: "0"},
+		},
+	})
+	if err != nil {
+		fmt.Println("DynamoDB Profile Upsert Error:", err)
+		return response(500, "Lỗi hệ thống khi cập nhật hồ sơ người dùng"), nil
 	}
 
 	// 5. Trả về thành công

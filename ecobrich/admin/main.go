@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/aws/aws-lambda-go/events"
@@ -58,24 +59,19 @@ func handleRequest(ctx context.Context, request events.APIGatewayProxyRequest) (
 		groupList, ok := groups.([]interface{})
 		if ok {
 			for _, g := range groupList {
-				if str, ok := g.(string); ok && str == "Admin" {
+				if str, ok := g.(string); ok && strings.EqualFold(str, "admin") {
 					isAdmin = true
 					break
 				}
 			}
 		}
-		// Also handles case where it might come as a specific format depend on library/mapping
-		// String check fallback just in case:
-		if fmt.Sprintf("%v", groups) == "[Admin]" { 
+		if strings.Contains(strings.ToLower(fmt.Sprintf("%v", groups)), "admin") {
 			isAdmin = true
 		}
 	}
 
 	if !isAdmin {
-		// Strict check: Only Admins can use this API
-		// For Debugging/Demo purposes where Cognito Groups might not be set up:
-		fmt.Println("Warning: Non-Admin user accessing Admin API (Bypassed for testing)")
-		// return response(403, "Access Denied: Admins only"), nil
+		return response(403, "Access Denied: Admins only"), nil
 	}
 
 	// 2. Parse Request Body

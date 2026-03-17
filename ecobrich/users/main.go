@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
@@ -14,12 +15,12 @@ import (
 )
 
 type UserProfile struct {
-	ID       string  `json:"id"`
-	Name     string  `json:"name"`
-	Email    string  `json:"email"`
-	Points   float64 `json:"points"`
-	TotalKg  float64 `json:"totalKg"`
-	Status   string  `json:"status"`
+	ID      string  `json:"id"`
+	Name    string  `json:"name"`
+	Email   string  `json:"email"`
+	Points  float64 `json:"points"`
+	TotalKg float64 `json:"totalKg"`
+	Status  string  `json:"status"`
 }
 
 type UsersResponse struct {
@@ -53,10 +54,17 @@ func handleRequest(ctx context.Context, request events.APIGatewayProxyRequest) (
 		groupList, ok := groups.([]interface{})
 		if ok {
 			for _, g := range groupList {
-				if str, ok := g.(string); ok && str == "Admin" {
+				if str, ok := g.(string); ok && strings.EqualFold(str, "admin") {
 					isAdmin = true
 					break
 				}
+			}
+		}
+
+		if !isAdmin {
+			groupsText := strings.ToLower(fmt.Sprintf("%v", groups))
+			if strings.Contains(groupsText, "admin") {
+				isAdmin = true
 			}
 		}
 	}
