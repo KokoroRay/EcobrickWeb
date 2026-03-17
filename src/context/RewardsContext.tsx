@@ -186,6 +186,63 @@ export function RewardsProvider({ children }: { children: ReactNode }) {
   // Load vouchers on mount
   useEffect(() => {
     fetchVouchers();
+    fetchAllUsers();
+  }, []);
+
+  // --- FETCH ALL USERS (Admin only) ---
+  const fetchAllUsers = useCallback(async () => {
+    try {
+      const API_BASE = getApiBase();
+      if (!API_BASE) return;
+
+      const token = await getAuthToken();
+      if (!token) return;
+
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (token) headers['Authorization'] = token;
+
+      const res = await fetch(`${API_BASE}/admin/users`, { headers });
+      if (res.ok) {
+        const data = await res.json();
+        const users = data.users || [];
+
+        // Map API response to UserRewardProfile
+        const usersMap: Record<string, UserRewardProfile> = {};
+        users.forEach((u: any) => {
+          usersMap[u.id] = {
+            id: u.id,
+            name: u.name || 'Unknown',
+            email: u.email || '',
+            points: u.points || 0,
+            totalKg: u.totalKg || 0,
+            history: [],
+            claimedVouchers: []
+          };
+        });
+
+        // Merge with existing local data (don't overwrite history)
+        setUsersDb(prev => {
+          const merged = { ...prev };
+          Object.keys(usersMap).forEach(userId => {
+            if (merged[userId]) {
+              // Keep history, update points
+              merged[userId] = {
+                ...merged[userId],
+                ...usersMap[userId],
+                history: merged[userId].history,
+                claimedVouchers: merged[userId].claimedVouchers
+              };
+            } else {
+              // New user
+              merged[userId] = usersMap[userId];
+            }
+          });
+          return merged;
+        });
+      }
+    } catch (e) {
+      console.error("Fetch all users failed", e);
+    }
   }, []);
 
 
@@ -480,7 +537,10 @@ export function RewardsProvider({ children }: { children: ReactNode }) {
     return true;
   }, [isAuthenticated, config.pointsPerKg]);
 
-  const refreshData = () => { fetchVouchers(); };
+  const refreshData = () => { 
+    fetchVouchers(); 
+    fetchAllUsers();
+  };
 
   return (
     <RewardsContext.Provider value={{

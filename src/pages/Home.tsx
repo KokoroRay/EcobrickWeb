@@ -27,7 +27,14 @@ export default function Home() {
 
   return (
     <div className="page content">
-      <section className="hero">
+      <section className="hero hero-banner" style={{
+        backgroundImage: `url(${getAssetPath('images/background.jpg')})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundAttachment: 'fixed',
+        position: 'relative'
+      }}>
+        <div className="hero-overlay"></div>
         <div className="hero-left">
           <h1 className="animate-slide-up">
             GẠCH TÁI CHẾ <span className="highlight">ECOBRICK</span>
@@ -41,14 +48,6 @@ export default function Home() {
               Khám phá sản phẩm →
             </Link>
           </div>
-        </div>
-        <div className="hero-right">
-          <img
-            src={getAssetPath('images/banner.jpg')}
-            alt="Gạch lát từ rác nhựa"
-            loading="lazy"
-            className="animate-float"
-          />
         </div>
       </section>
 
