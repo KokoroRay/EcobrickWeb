@@ -23,7 +23,7 @@ type RequestBody struct {
 
 // Cấu trúc trả về
 type ResponseBody struct {
-	Message      string  `json:"message"`
+	Message       string  `json:"message"`
 	PointsPending float64 `json:"points_pending"`
 }
 
@@ -46,7 +46,7 @@ func handleRequest(ctx context.Context, request events.APIGatewayProxyRequest) (
 	if !ok {
 		return response(401, "Không tìm thấy thông tin xác thực"), nil
 	}
-	userID := claims["sub"].(string) 
+	userID := claims["sub"].(string)
 	userEmail := ""
 	if email, ok := claims["email"].(string); ok {
 		userEmail = email
@@ -72,10 +72,10 @@ func handleRequest(ctx context.Context, request events.APIGatewayProxyRequest) (
 
 	// 4. Ghi vào DynamoDB - CHỈ GHI HISTORY với Status=pending
 	// Không cộng điểm ngay vào Profile
-	
+
 	userPK := "USER#" + userID
 	historySK := "TRANS#" + timestamp
-	
+
 	// Default note
 	note := body.Note
 	if note == "" {

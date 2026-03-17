@@ -81,7 +81,7 @@ type ListResponse struct {
 func listVouchers(ctx context.Context, headers map[string]string, userID string) (events.APIGatewayProxyResponse, error) {
 	// 1. Scan Vouchers
 	out, err := dbClient.Scan(ctx, &dynamodb.ScanInput{
-		TableName: aws.String(tableName),
+		TableName:        aws.String(tableName),
 		FilterExpression: aws.String("PK = :pk"),
 		ExpressionAttributeValues: map[string]types.AttributeValue{
 			":pk": &types.AttributeValueMemberS{Value: "VOUCHER"},
@@ -123,7 +123,7 @@ func listVouchers(ctx context.Context, headers map[string]string, userID string)
 	userPoints := 0.0
 	if userID != "" {
 		pOut, err := dbClient.Query(ctx, &dynamodb.QueryInput{
-			TableName: aws.String(tableName),
+			TableName:              aws.String(tableName),
 			KeyConditionExpression: aws.String("PK = :pk"),
 			ExpressionAttributeValues: map[string]types.AttributeValue{
 				":pk": &types.AttributeValueMemberS{Value: "USER#" + userID},

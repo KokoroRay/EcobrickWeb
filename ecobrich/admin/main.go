@@ -19,12 +19,12 @@ import (
 type AdminAwardRequest struct {
 	TargetUserID string  `json:"target_user_id"`
 	AmountKg     float64 `json:"amount_kg"`
-	Note         string  `json:"note"`  // Lý do cộng điểm
+	Note         string  `json:"note"`                    // Lý do cộng điểm
 	ManualPoints *int    `json:"manual_points,omitempty"` // Điểm nhập tay (nếu có)
 }
 
 type ResponseBody struct {
-	Message      string  `json:"message"`
+	Message       string  `json:"message"`
 	PointsAwarded float64 `json:"points_awarded"`
 }
 
@@ -101,7 +101,7 @@ func handleRequest(ctx context.Context, request events.APIGatewayProxyRequest) (
 	// 4. Update DynamoDB (Transaction)
 	userPK := "USER#" + req.TargetUserID
 	historySK := "TRANS#" + timestamp
-	
+
 	// Prepare Note
 	note := req.Note
 	if note == "" {
@@ -123,7 +123,7 @@ func handleRequest(ctx context.Context, request events.APIGatewayProxyRequest) (
 						"Note":         &types.AttributeValueMemberS{Value: note},
 						"AdminID":      &types.AttributeValueMemberS{Value: adminID}, // Audit trail
 						"CreatedAt":    &types.AttributeValueMemberS{Value: timestamp},
-						"Status":		&types.AttributeValueMemberS{Value: "approved"}, // Auto-approved
+						"Status":       &types.AttributeValueMemberS{Value: "approved"}, // Auto-approved
 					},
 				},
 			},

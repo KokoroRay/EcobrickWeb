@@ -58,8 +58,8 @@ func handleRequest(ctx context.Context, request events.APIGatewayProxyRequest) (
 	}
 
 	headers := map[string]string{
-		"Content-Type":                "application/json",
-		"Access-Control-Allow-Origin": "*",
+		"Content-Type":                 "application/json",
+		"Access-Control-Allow-Origin":  "*",
 		"Access-Control-Allow-Headers": "Content-Type,Authorization",
 		"Access-Control-Allow-Methods": "GET,POST,OPTIONS",
 	}
@@ -101,7 +101,7 @@ func isAdmin(request events.APIGatewayProxyRequest) bool {
 
 func listPendingDonations(ctx context.Context, headers map[string]string) (events.APIGatewayProxyResponse, error) {
 	out, err := dbClient.Scan(ctx, &dynamodb.ScanInput{
-		TableName: aws.String(tableName),
+		TableName:        aws.String(tableName),
 		FilterExpression: aws.String("#t = :donate AND #s = :pending"),
 		ExpressionAttributeNames: map[string]string{
 			"#t": "Type",
@@ -298,8 +298,8 @@ func response(status int, body any) (events.APIGatewayProxyResponse, error) {
 	return events.APIGatewayProxyResponse{
 		StatusCode: status,
 		Headers: map[string]string{
-			"Content-Type":                "application/json",
-			"Access-Control-Allow-Origin": "*",
+			"Content-Type":                 "application/json",
+			"Access-Control-Allow-Origin":  "*",
 			"Access-Control-Allow-Headers": "Content-Type,Authorization",
 			"Access-Control-Allow-Methods": "GET,POST,OPTIONS",
 		},
