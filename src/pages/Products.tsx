@@ -1,19 +1,47 @@
 import { Link } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { useProducts } from '../context/ProductContext';
 import { getAssetPath } from '../utils/assets';
 
 export default function Products() {
   const { products } = useProducts();
+  const [searchParams] = useSearchParams();
+  const query = searchParams.get('q')?.trim().toLowerCase() || '';
+
+  const filteredProducts = query
+    ? products.filter((product) => {
+      const searchableText = [product.name, product.category, product.description].join(' ').toLowerCase();
+      return searchableText.includes(query);
+    })
+    : products;
 
   return (
     <div className="page content" style={{ background: '#f8fafc' }}>
       <section className="section pad">
         <div className="container">
           <h2 className="section-title">SẢN PHẨM</h2>
-          <p className="section-sub">Toàn bộ sản phẩm gạch tái chế</p>
+          <p className="section-sub">
+            {query ? `Kết quả tìm kiếm cho "${searchParams.get('q')}"` : 'Toàn bộ sản phẩm gạch tái chế'}
+          </p>
+
+          {query && filteredProducts.length === 0 && (
+            <div
+              style={{
+                background: 'white',
+                border: '1px solid #e2e8f0',
+                borderRadius: '12px',
+                padding: '1rem 1.25rem',
+                color: '#475569',
+                marginBottom: '1rem',
+                textAlign: 'center'
+              }}
+            >
+              Không tìm thấy sản phẩm phù hợp, vui lòng thử từ khóa khác.
+            </div>
+          )}
 
           <div className="grid-3">
-            {products.map((product) => (
+            {filteredProducts.map((product) => (
               <article className="card" key={product.id}>
                 <img
                   src={getAssetPath(product.image || 'images/ecobrick-std.jpg')}

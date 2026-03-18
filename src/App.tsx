@@ -1,5 +1,6 @@
 import { Route, Routes, useLocation } from 'react-router-dom';
 import Header from './components/Header';
+import MobileBottomNav from './components/MobileBottomNav';
 import Footer from './components/Footer';
 import ProtectedRoute from './components/ProtectedRoute';
 import AdminRoute from './components/AdminRoute';
@@ -96,6 +97,7 @@ export default function App() {
                     <Route path="/admin" element={<AdminRoute><Admin /></AdminRoute>} />
                   </Routes>
                 </main>
+                {!isAdminRoute && <MobileBottomNav />}
                 {!isAdminRoute && <Footer />}
               </div>
             </CartProvider>

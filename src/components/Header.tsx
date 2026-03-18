@@ -1,5 +1,5 @@
-import { useNavigate } from 'react-router-dom';
-import { useState, useEffect, useRef } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { useState, useEffect, useRef, type FormEvent } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { getAssetPath } from '../utils/assets';
 import { useCart } from '../context/CartContext';
@@ -12,10 +12,12 @@ export default function Header() {
   const [query, setQuery] = useState('');
   const [showDropdown, setShowDropdown] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
   const { isAuthenticated, user, userAttributes, logout, role } = useAuth();
   const { cartCount } = useCart();
   const dropdownRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
+  const location = useLocation();
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -49,10 +51,30 @@ export default function Header() {
     await logout();
     setShowDropdown(false);
     setIsMobileMenuOpen(false);
+    setIsMobileSearchOpen(false);
     navigate('/');
   };
 
   const closeMobileMenu = () => setIsMobileMenuOpen(false);
+
+  const openMobileMenu = () => {
+    setIsMobileSearchOpen(false);
+    setIsMobileMenuOpen(true);
+  };
+
+  const toggleMobileSearch = () => {
+    setIsMobileMenuOpen(false);
+    setIsMobileSearchOpen((prev) => !prev);
+  };
+
+  const handleSearchSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const trimmedQuery = query.trim();
+    navigate(trimmedQuery ? `/products?q=${encodeURIComponent(trimmedQuery)}` : '/products');
+    setIsMobileMenuOpen(false);
+    setIsMobileSearchOpen(false);
+    setShowDropdown(false);
+  };
 
   const getInitials = () => {
     if (userAttributes?.name) {
@@ -64,6 +86,12 @@ export default function Header() {
     }
     return user?.username?.[0]?.toUpperCase() || 'U';
   };
+
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
+    setIsMobileSearchOpen(false);
+    setShowDropdown(false);
+  }, [location.pathname, location.search]);
 
   return (
     <header className="header" data-header>
@@ -78,14 +106,50 @@ export default function Header() {
           />
         </Link>
 
-        <button
-          className="nav-open-btn"
-          type="button"
-          aria-label="Mở menu"
-          onClick={() => setIsMobileMenuOpen(true)}
-        >
-          <i className="fa-solid fa-bars" aria-hidden="true"></i>
-        </button>
+        <div className="mobile-header-actions">
+          <button
+            className="mobile-search-toggle"
+            type="button"
+            aria-label="Mở tìm kiếm"
+            onClick={toggleMobileSearch}
+          >
+            <i className="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+          </button>
+
+          <button
+            className="nav-open-btn"
+            type="button"
+            aria-label="Mở menu"
+            onClick={openMobileMenu}
+          >
+            <i className="fa-solid fa-bars" aria-hidden="true"></i>
+          </button>
+        </div>
+
+        <div className={`mobile-search-panel ${isMobileSearchOpen ? 'active' : ''}`}>
+          <form className="search-bar" onSubmit={handleSearchSubmit}>
+            <button type="submit" className="search-icon-btn" aria-label="Tìm kiếm">
+              <i className="fa-solid fa-magnifying-glass search-icon" aria-hidden="true"></i>
+            </button>
+            <input
+              type="text"
+              placeholder="Tìm sản phẩm, vật liệu..."
+              className="search-input"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+            />
+            {query && (
+              <button
+                type="button"
+                className="search-close"
+                onClick={() => setQuery('')}
+                aria-label="Xóa tìm kiếm"
+              >
+                <i className="fa-solid fa-xmark" aria-hidden="true"></i>
+              </button>
+            )}
+          </form>
+        </div>
 
         {/* --- Navbar --- */}
         <nav className={`navbar ${isMobileMenuOpen ? 'active' : ''}`} data-navbar>
@@ -146,11 +210,13 @@ export default function Header() {
           <ul className="nav-action-list">
             {/* Search */}
             <li className="search-wrapper">
-              <div className="search-bar">
-                <i className="fa-solid fa-magnifying-glass search-icon" aria-hidden="true"></i>
+              <form className="search-bar" onSubmit={handleSearchSubmit}>
+                <button type="submit" className="search-icon-btn" aria-label="Tìm kiếm">
+                  <i className="fa-solid fa-magnifying-glass search-icon" aria-hidden="true"></i>
+                </button>
                 <input
                   type="text"
-                  placeholder="Tìm kiếm"
+                  placeholder="Tìm sản phẩm"
                   className="search-input"
                   value={query}
                   onChange={(event) => setQuery(event.target.value)}
@@ -165,7 +231,7 @@ export default function Header() {
                     <i className="fa-solid fa-xmark" aria-hidden="true"></i>
                   </button>
                 )}
-              </div>
+              </form>
             </li>
 
             {/* Cart Icon */}
