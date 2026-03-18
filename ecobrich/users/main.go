@@ -5,11 +5,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"regexp"
 	"strings"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 )
@@ -30,6 +32,9 @@ type UsersResponse struct {
 
 var dbClient *dynamodb.Client
 var tableName string
+var userPoolID string
+var cognitoClient *cognitoidentityprovider.Client
+var uuidRegex = regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)
 
 func init() {
 	cfg, err := config.LoadDefaultConfig(context.TODO())
@@ -37,7 +42,9 @@ func init() {
 		panic("Cannot load AWS config")
 	}
 	dbClient = dynamodb.NewFromConfig(cfg)
+	cognitoClient = cognitoidentityprovider.NewFromConfig(cfg)
 	tableName = os.Getenv("TABLE_NAME")
+	userPoolID = os.Getenv("USER_POOL_ID")
 }
 
 func handleRequest(ctx context.Context, request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
@@ -138,6 +145,19 @@ func handleRequest(ctx context.Context, request events.APIGatewayProxyRequest) (
 		})
 	}
 
+	for i := range users {
+		needIdentity := users[i].Email == "" || users[i].Name == "" || isUUIDLike(users[i].Name)
+		if needIdentity {
+			name, email := resolveUserIdentity(ctx, users[i].ID, users[i].Name, users[i].Email)
+			users[i].Name = name
+			users[i].Email = email
+		}
+
+		if users[i].Name == "" {
+			users[i].Name = "Thành viên"
+		}
+	}
+
 	// 4. Return response
 	resp := UsersResponse{
 		Users: users,
@@ -168,6 +188,77 @@ func response(statusCode int, message string) events.APIGatewayProxyResponse {
 		},
 		Body: fmt.Sprintf(`{"message":"%s"}`, message),
 	}
+}
+
+func isUUIDLike(value string) bool {
+	return uuidRegex.MatchString(strings.ToLower(strings.TrimSpace(value)))
+}
+
+func resolveUserIdentity(ctx context.Context, sub string, currentName string, currentEmail string) (string, string) {
+	name := strings.TrimSpace(currentName)
+	email := strings.TrimSpace(currentEmail)
+
+	if userPoolID == "" || sub == "" || cognitoClient == nil {
+		if name == "" || isUUIDLike(name) {
+			name = humanizeName(name, email, sub)
+		}
+		return name, email
+	}
+
+	out, err := cognitoClient.ListUsers(ctx, &cognitoidentityprovider.ListUsersInput{
+		UserPoolId: &userPoolID,
+		Filter:     awsString(fmt.Sprintf(`sub = "%s"`, sub)),
+		Limit:      int32Ptr(1),
+	})
+	if err == nil && len(out.Users) > 0 {
+		for _, attr := range out.Users[0].Attributes {
+			attrName := ""
+			if attr.Name != nil {
+				attrName = strings.ToLower(*attr.Name)
+			}
+
+			switch attrName {
+			case "name":
+				if attr.Value != nil && strings.TrimSpace(*attr.Value) != "" {
+					name = strings.TrimSpace(*attr.Value)
+				}
+			case "email":
+				if attr.Value != nil && strings.TrimSpace(*attr.Value) != "" {
+					email = strings.TrimSpace(*attr.Value)
+				}
+			}
+		}
+	}
+
+	name = humanizeName(name, email, sub)
+	return name, email
+}
+
+func humanizeName(name string, email string, fallback string) string {
+	if strings.TrimSpace(name) != "" && !isUUIDLike(name) {
+		return name
+	}
+	if strings.Contains(email, "@") {
+		parts := strings.SplitN(email, "@", 2)
+		if strings.TrimSpace(parts[0]) != "" {
+			return parts[0]
+		}
+	}
+	if len(fallback) > 8 {
+		return "user-" + fallback[:8]
+	}
+	if fallback != "" {
+		return "user-" + fallback
+	}
+	return "Thành viên"
+}
+
+func awsString(v string) *string {
+	return &v
+}
+
+func int32Ptr(v int32) *int32 {
+	return &v
 }
 
 func main() {

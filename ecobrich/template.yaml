@@ -12,6 +12,7 @@ Globals:
     Environment:
       Variables:
         TABLE_NAME: !Ref PlasticDbTable
+        USER_POOL_ID: !Ref PlasticUserPool
 
 Resources:
   # ------------------------------------------------------------------
@@ -131,6 +132,11 @@ Resources:
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref PlasticDbTable
+        - Statement:
+            - Effect: Allow
+              Action:
+                - cognito-idp:ListUsers
+              Resource: !GetAtt PlasticUserPool.Arn
       Events:
         AdminUsersApi:
           Type: Api

@@ -44,7 +44,7 @@ type RewardsState = {
 const RewardsContext = createContext<RewardsState | undefined>(undefined);
 
 export function RewardsProvider({ children }: { children: ReactNode }) {
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, role } = useAuth();
 
   // Local DB for Legacy Stuff (Donation History, User Points) - Ideally this should also be API
   // But for now, we keep the Hybrid approach: 
@@ -283,12 +283,28 @@ export function RewardsProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  // Load admin/public data on mount
+  // Load data after auth state is ready.
   useEffect(() => {
+    if (!isAuthenticated) return;
+
     fetchVouchers();
-    fetchAllUsers();
-    fetchPendingDonations();
-  }, []);
+
+    if (role === 'admin') {
+      fetchAllUsers();
+      fetchPendingDonations();
+    }
+  }, [isAuthenticated, role, fetchVouchers, fetchAllUsers, fetchPendingDonations]);
+
+  useEffect(() => {
+    if (!isAuthenticated || role !== 'admin') return;
+
+    const id = window.setInterval(() => {
+      fetchAllUsers();
+      fetchPendingDonations();
+    }, 15000);
+
+    return () => window.clearInterval(id);
+  }, [isAuthenticated, role, fetchAllUsers, fetchPendingDonations]);
 
 
   // --- ADD DONATION ---

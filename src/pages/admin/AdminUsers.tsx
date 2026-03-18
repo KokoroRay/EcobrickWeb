@@ -181,6 +181,14 @@ export default function AdminUsers() {
         u.email.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
+    const isUuidLike = (value: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
+    const displayName = (name: string, email: string, id: string) => {
+        if (name && !isUuidLike(name)) return name;
+        if (email && email.includes('@')) return email.split('@')[0];
+        return `user-${id.slice(0, 8)}`;
+    };
+    const displayEmail = (email: string) => email || 'Chưa có email';
+
     const handleAdjust = async (points: number, weight: number, reason: string) => {
         if (selectedUser) {
             // If weight is provided (>0), use it (backend will calc points).
@@ -253,8 +261,8 @@ export default function AdminUsers() {
                         {filteredUsers.map(user => (
                             <tr key={user.id}>
                                 <td>
-                                    <div className="text-bold">{user.name}</div>
-                                    <div className="text-sm text-muted">{user.email}</div>
+                                    <div className="text-bold">{displayName(user.name, user.email, user.id)}</div>
+                                    <div className="text-sm text-muted">{displayEmail(user.email)}</div>
                                 </td>
                                 <td>
                                     <span style={{ fontWeight: 700, color: '#16a34a' }}>{user.points}</span>

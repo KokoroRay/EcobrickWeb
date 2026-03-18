@@ -133,6 +133,12 @@ func listPendingDonations(ctx context.Context, headers map[string]string) (event
 
 		name, email := loadProfile(ctx, pk.Value)
 		if name == "" {
+			name = parseString(item["UserName"])
+		}
+		if email == "" {
+			email = parseString(item["UserEmail"])
+		}
+		if name == "" {
 			name = userID
 		}
 

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/aws/aws-lambda-go/events"
@@ -54,6 +55,8 @@ func handleRequest(ctx context.Context, request events.APIGatewayProxyRequest) (
 	userName := userID
 	if name, ok := claims["name"].(string); ok && name != "" {
 		userName = name
+	} else if strings.Contains(userEmail, "@") {
+		userName = strings.SplitN(userEmail, "@", 2)[0]
 	}
 
 	// 2. Parse Body lấy số kg
@@ -90,6 +93,8 @@ func handleRequest(ctx context.Context, request events.APIGatewayProxyRequest) (
 			"Type":         &types.AttributeValueMemberS{Value: "DONATE"},
 			"AmountKg":     &types.AttributeValueMemberN{Value: fmt.Sprintf("%f", body.Amount)},
 			"PointsEarned": &types.AttributeValueMemberN{Value: fmt.Sprintf("%f", points)},
+			"UserName":     &types.AttributeValueMemberS{Value: userName},
+			"UserEmail":    &types.AttributeValueMemberS{Value: userEmail},
 			"Note":         &types.AttributeValueMemberS{Value: note},
 			"Status":       &types.AttributeValueMemberS{Value: "pending"}, // Chờ duyệt
 			"CreatedAt":    &types.AttributeValueMemberS{Value: timestamp},
@@ -108,7 +113,7 @@ func handleRequest(ctx context.Context, request events.APIGatewayProxyRequest) (
 			"PK": &types.AttributeValueMemberS{Value: userPK},
 			"SK": &types.AttributeValueMemberS{Value: "PROFILE"},
 		},
-		UpdateExpression: aws.String("SET Email = if_not_exists(Email, :e), #nm = if_not_exists(#nm, :n), UpdatedAt = :t ADD TotalPoints :zp, TotalKg :zk"),
+		UpdateExpression: aws.String("SET Email = :e, #nm = :n, UpdatedAt = :t ADD TotalPoints :zp, TotalKg :zk"),
 		ExpressionAttributeNames: map[string]string{
 			"#nm": "Name",
 		},
