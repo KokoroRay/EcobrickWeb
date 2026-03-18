@@ -70,10 +70,6 @@ const ProductContext = createContext<ProductContextType | undefined>(undefined);
 
 export function ProductProvider({ children }: { children: ReactNode }) {
     const [products, setProducts] = useState<Product[]>(() => {
-        // Force refresh from initialProducts to ensure image paths are up to date for this deployment
-        // (Bypassing localStorage check for now to fix user's report without clearing cache manually)
-        return initialProducts;
-        /* 
         const stored = localStorage.getItem('ecobrick_products');
         if (stored) {
             try {
@@ -83,8 +79,7 @@ export function ProductProvider({ children }: { children: ReactNode }) {
                 return initialProducts;
             }
         }
-        return initialProducts; 
-        */
+        return initialProducts;
     });
 
     useEffect(() => {
