@@ -46,7 +46,7 @@ const initialProducts: Product[] = [
         price: 35000,
         description: 'Khối nhựa HDPE đã qua sơ chế và ép khối, thích hợp cho các đơn vị gia công, điêu khắc hoặc tái chế thứ cấp.',
         image: 'images/hdpe.jpg',
-        category: 'Material',
+        category: 'Vật liệu xây dựng',
         stock: 500,
         sizes: ['1kg', '5kg', '10kg'],
         specifications: {

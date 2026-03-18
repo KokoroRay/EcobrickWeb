@@ -31,7 +31,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       console.log('User Groups Found:', groups);
 
-      if (groups.includes('admin')) {
+      if (groups.some((g) => typeof g === 'string' && g.toLowerCase() === 'admin')) {
         return 'admin';
       }
       return 'user';

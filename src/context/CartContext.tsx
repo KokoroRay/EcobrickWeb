@@ -22,8 +22,11 @@ type CartContextType = {
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
+import { useProducts } from './ProductContext';
+
 export function CartProvider({ children }: { children: ReactNode }) {
     const { user, isAuthenticated } = useAuth();
+    const { products } = useProducts();
     const userId = isAuthenticated && user ? (user.username || user.id) : 'guest';
     const storageKey = `ecobrick_cart_${userId}`;
 
@@ -35,7 +38,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
         const stored = localStorage.getItem(storageKey);
         if (stored) {
             try {
-                setItems(JSON.parse(stored));
+                const parsed: CartItem[] = JSON.parse(stored);
+                // Refresh stale product data from ProductContext covering image paths
+                const refreshed = parsed.map(item => {
+                    const fresh = products.find(p => p.id === item.productId);
+                    return fresh ? { ...item, product: fresh } : item;
+                });
+                setItems(refreshed);
             } catch {
                 setItems([]);
             }
@@ -43,7 +52,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
             setItems([]);
         }
         setAppliedVoucher(null); // Reset voucher on user switch
-    }, [userId, storageKey]);
+    }, [userId, storageKey, products]);
 
     useEffect(() => {
         localStorage.setItem(storageKey, JSON.stringify(items));

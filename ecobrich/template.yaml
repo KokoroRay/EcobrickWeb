@@ -12,6 +12,7 @@ Globals:
     Environment:
       Variables:
         TABLE_NAME: !Ref PlasticDbTable
+        USER_POOL_ID: !Ref PlasticUserPool
 
 Resources:
   # ------------------------------------------------------------------
@@ -117,6 +118,59 @@ Resources:
           Properties:
             RestApiId: !Ref PlasticApi
             Path: /admin/award-points
+            Method: POST
+            Auth:
+              Authorizer: CognitoAuthorizer
+    Metadata:
+      BuildMethod: makefile
+
+  AdminUsersFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: .
+      Handler: bootstrap
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref PlasticDbTable
+        - Statement:
+            - Effect: Allow
+              Action:
+                - cognito-idp:ListUsers
+              Resource: !GetAtt PlasticUserPool.Arn
+      Events:
+        AdminUsersApi:
+          Type: Api
+          Properties:
+            RestApiId: !Ref PlasticApi
+            Path: /admin/users
+            Method: GET
+            Auth:
+              Authorizer: CognitoAuthorizer
+    Metadata:
+      BuildMethod: makefile
+
+  AdminDonationsFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: .
+      Handler: bootstrap
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref PlasticDbTable
+      Events:
+        AdminDonationsListApi:
+          Type: Api
+          Properties:
+            RestApiId: !Ref PlasticApi
+            Path: /admin/donations
+            Method: GET
+            Auth:
+              Authorizer: CognitoAuthorizer
+        AdminDonationsReviewApi:
+          Type: Api
+          Properties:
+            RestApiId: !Ref PlasticApi
+            Path: /admin/donations/review
             Method: POST
             Auth:
               Authorizer: CognitoAuthorizer

@@ -1,21 +1,19 @@
-import { useMemo } from 'react';
 import { useRewards } from '../../context/RewardsContext';
 import { useToast } from '../../context/ToastContext';
 
 export default function AdminOrders() {
-    const { allUsers, updateDonationStatus } = useRewards();
+    const { pendingDonations, reviewDonationRequest } = useRewards();
     const { showToast } = useToast();
 
-    const pendingOrders = useMemo(() => {
-        return allUsers.flatMap(user =>
-            user.history
-                .filter(h => h.status === 'pending' && h.type === 'donate')
-                .map(h => ({ ...h, userName: user.name, userEmail: user.email }))
-        ).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-    }, [allUsers]);
+    const pendingOrders = [...pendingDonations].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
-    const handleUpdateStatus = (uid: string, id: string, status: 'approved' | 'rejected') => {
-        updateDonationStatus(uid, id, status);
+    const handleUpdateStatus = async (uid: string, id: string, status: 'approved' | 'rejected') => {
+        const ok = await reviewDonationRequest(uid, id, status);
+        if (!ok) {
+            showToast('Không thể cập nhật trạng thái. Vui lòng thử lại.', 'error');
+            return;
+        }
+
         if (status === 'approved') {
             showToast('Đã phê duyệt yêu cầu quyên góp!', 'success');
         } else {

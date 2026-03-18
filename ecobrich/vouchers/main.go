@@ -81,7 +81,7 @@ type ListResponse struct {
 func listVouchers(ctx context.Context, headers map[string]string, userID string) (events.APIGatewayProxyResponse, error) {
 	// 1. Scan Vouchers
 	out, err := dbClient.Scan(ctx, &dynamodb.ScanInput{
-		TableName: aws.String(tableName),
+		TableName:        aws.String(tableName),
 		FilterExpression: aws.String("PK = :pk"),
 		ExpressionAttributeValues: map[string]types.AttributeValue{
 			":pk": &types.AttributeValueMemberS{Value: "VOUCHER"},
@@ -123,7 +123,7 @@ func listVouchers(ctx context.Context, headers map[string]string, userID string)
 	userPoints := 0.0
 	if userID != "" {
 		pOut, err := dbClient.Query(ctx, &dynamodb.QueryInput{
-			TableName: aws.String(tableName),
+			TableName:              aws.String(tableName),
 			KeyConditionExpression: aws.String("PK = :pk"),
 			ExpressionAttributeValues: map[string]types.AttributeValue{
 				":pk": &types.AttributeValueMemberS{Value: "USER#" + userID},
@@ -159,15 +159,33 @@ func listVouchers(ctx context.Context, headers map[string]string, userID string)
 }
 
 func createVoucher(ctx context.Context, request events.APIGatewayProxyRequest, headers map[string]string) (events.APIGatewayProxyResponse, error) {
-	// Verify Admin
 	claims, ok := request.RequestContext.Authorizer["claims"].(map[string]interface{})
 	if !ok {
-		// Mock logic for local testing or if Auth is misconfigured
-		// For now, strict check
-		// return events.APIGatewayProxyResponse{StatusCode: 401, Body: `{"message":"Unauthorized"}`, Headers: headers}, nil
+		return events.APIGatewayProxyResponse{StatusCode: 401, Body: `{"message":"Unauthorized"}`, Headers: headers}, nil
 	}
-	// Check group/role if needed, for now assume Authenticated = Allowed or check "cognito:groups"
-	_ = claims
+
+	groups, ok := claims["cognito:groups"]
+	if !ok {
+		return events.APIGatewayProxyResponse{StatusCode: 403, Body: `{"message":"Access Denied: Admins only"}`, Headers: headers}, nil
+	}
+
+	isAdmin := false
+	if groupList, ok := groups.([]interface{}); ok {
+		for _, g := range groupList {
+			if str, ok := g.(string); ok && strings.EqualFold(str, "admin") {
+				isAdmin = true
+				break
+			}
+		}
+	}
+
+	if !isAdmin && strings.Contains(strings.ToLower(fmt.Sprintf("%v", groups)), "admin") {
+		isAdmin = true
+	}
+
+	if !isAdmin {
+		return events.APIGatewayProxyResponse{StatusCode: 403, Body: `{"message":"Access Denied: Admins only"}`, Headers: headers}, nil
+	}
 
 	var v Voucher
 	if err := json.Unmarshal([]byte(request.Body), &v); err != nil {

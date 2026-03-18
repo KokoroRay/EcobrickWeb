@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/aws/aws-lambda-go/events"
@@ -18,12 +19,12 @@ import (
 type AdminAwardRequest struct {
 	TargetUserID string  `json:"target_user_id"`
 	AmountKg     float64 `json:"amount_kg"`
-	Note         string  `json:"note"`  // Lý do cộng điểm
+	Note         string  `json:"note"`                    // Lý do cộng điểm
 	ManualPoints *int    `json:"manual_points,omitempty"` // Điểm nhập tay (nếu có)
 }
 
 type ResponseBody struct {
-	Message      string  `json:"message"`
+	Message       string  `json:"message"`
 	PointsAwarded float64 `json:"points_awarded"`
 }
 
@@ -58,24 +59,19 @@ func handleRequest(ctx context.Context, request events.APIGatewayProxyRequest) (
 		groupList, ok := groups.([]interface{})
 		if ok {
 			for _, g := range groupList {
-				if str, ok := g.(string); ok && str == "Admin" {
+				if str, ok := g.(string); ok && strings.EqualFold(str, "admin") {
 					isAdmin = true
 					break
 				}
 			}
 		}
-		// Also handles case where it might come as a specific format depend on library/mapping
-		// String check fallback just in case:
-		if fmt.Sprintf("%v", groups) == "[Admin]" { 
+		if strings.Contains(strings.ToLower(fmt.Sprintf("%v", groups)), "admin") {
 			isAdmin = true
 		}
 	}
 
 	if !isAdmin {
-		// Strict check: Only Admins can use this API
-		// For Debugging/Demo purposes where Cognito Groups might not be set up:
-		fmt.Println("Warning: Non-Admin user accessing Admin API (Bypassed for testing)")
-		// return response(403, "Access Denied: Admins only"), nil
+		return response(403, "Access Denied: Admins only"), nil
 	}
 
 	// 2. Parse Request Body
@@ -105,7 +101,7 @@ func handleRequest(ctx context.Context, request events.APIGatewayProxyRequest) (
 	// 4. Update DynamoDB (Transaction)
 	userPK := "USER#" + req.TargetUserID
 	historySK := "TRANS#" + timestamp
-	
+
 	// Prepare Note
 	note := req.Note
 	if note == "" {
@@ -127,7 +123,7 @@ func handleRequest(ctx context.Context, request events.APIGatewayProxyRequest) (
 						"Note":         &types.AttributeValueMemberS{Value: note},
 						"AdminID":      &types.AttributeValueMemberS{Value: adminID}, // Audit trail
 						"CreatedAt":    &types.AttributeValueMemberS{Value: timestamp},
-						"Status":		&types.AttributeValueMemberS{Value: "approved"}, // Auto-approved
+						"Status":       &types.AttributeValueMemberS{Value: "approved"}, // Auto-approved
 					},
 				},
 			},

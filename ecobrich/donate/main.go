@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/aws/aws-lambda-go/events"
@@ -23,7 +24,7 @@ type RequestBody struct {
 
 // Cấu trúc trả về
 type ResponseBody struct {
-	Message      string  `json:"message"`
+	Message       string  `json:"message"`
 	PointsPending float64 `json:"points_pending"`
 }
 
@@ -46,7 +47,17 @@ func handleRequest(ctx context.Context, request events.APIGatewayProxyRequest) (
 	if !ok {
 		return response(401, "Không tìm thấy thông tin xác thực"), nil
 	}
-	userID := claims["sub"].(string) 
+	userID := claims["sub"].(string)
+	userEmail := ""
+	if email, ok := claims["email"].(string); ok {
+		userEmail = email
+	}
+	userName := userID
+	if name, ok := claims["name"].(string); ok && name != "" {
+		userName = name
+	} else if strings.Contains(userEmail, "@") {
+		userName = strings.SplitN(userEmail, "@", 2)[0]
+	}
 
 	// 2. Parse Body lấy số kg
 	var body RequestBody
@@ -64,10 +75,10 @@ func handleRequest(ctx context.Context, request events.APIGatewayProxyRequest) (
 
 	// 4. Ghi vào DynamoDB - CHỈ GHI HISTORY với Status=pending
 	// Không cộng điểm ngay vào Profile
-	
+
 	userPK := "USER#" + userID
 	historySK := "TRANS#" + timestamp
-	
+
 	// Default note
 	note := body.Note
 	if note == "" {
@@ -82,6 +93,8 @@ func handleRequest(ctx context.Context, request events.APIGatewayProxyRequest) (
 			"Type":         &types.AttributeValueMemberS{Value: "DONATE"},
 			"AmountKg":     &types.AttributeValueMemberN{Value: fmt.Sprintf("%f", body.Amount)},
 			"PointsEarned": &types.AttributeValueMemberN{Value: fmt.Sprintf("%f", points)},
+			"UserName":     &types.AttributeValueMemberS{Value: userName},
+			"UserEmail":    &types.AttributeValueMemberS{Value: userEmail},
 			"Note":         &types.AttributeValueMemberS{Value: note},
 			"Status":       &types.AttributeValueMemberS{Value: "pending"}, // Chờ duyệt
 			"CreatedAt":    &types.AttributeValueMemberS{Value: timestamp},
@@ -91,6 +104,30 @@ func handleRequest(ctx context.Context, request events.APIGatewayProxyRequest) (
 	if err != nil {
 		fmt.Println("DynamoDB Error:", err)
 		return response(500, "Lỗi hệ thống khi lưu dữ liệu"), nil
+	}
+
+	// Upsert PROFILE so admin can list users even before any point approval.
+	_, err = dbClient.UpdateItem(ctx, &dynamodb.UpdateItemInput{
+		TableName: aws.String(tableName),
+		Key: map[string]types.AttributeValue{
+			"PK": &types.AttributeValueMemberS{Value: userPK},
+			"SK": &types.AttributeValueMemberS{Value: "PROFILE"},
+		},
+		UpdateExpression: aws.String("SET Email = :e, #nm = :n, UpdatedAt = :t ADD TotalPoints :zp, TotalKg :zk"),
+		ExpressionAttributeNames: map[string]string{
+			"#nm": "Name",
+		},
+		ExpressionAttributeValues: map[string]types.AttributeValue{
+			":e":  &types.AttributeValueMemberS{Value: userEmail},
+			":n":  &types.AttributeValueMemberS{Value: userName},
+			":t":  &types.AttributeValueMemberS{Value: timestamp},
+			":zp": &types.AttributeValueMemberN{Value: "0"},
+			":zk": &types.AttributeValueMemberN{Value: "0"},
+		},
+	})
+	if err != nil {
+		fmt.Println("DynamoDB Profile Upsert Error:", err)
+		return response(500, "Lỗi hệ thống khi cập nhật hồ sơ người dùng"), nil
 	}
 
 	// 5. Trả về thành công

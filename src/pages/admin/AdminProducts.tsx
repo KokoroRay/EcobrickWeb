@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useProducts } from '../../context/ProductContext';
 import { Product } from '../../types/cart';
+import { uploadImageToCloudinary } from '../../services/cloudinary';
 
 export default function AdminProducts() {
     const { products, addProduct, updateProduct, deleteProduct } = useProducts();
@@ -16,6 +17,8 @@ export default function AdminProducts() {
     const [stock, setStock] = useState('');
     const [desc, setDesc] = useState('');
     const [image, setImage] = useState('');
+    const [imageFile, setImageFile] = useState<File | null>(null);
+    const [isUploadingImage, setIsUploadingImage] = useState(false);
 
     // New Fields
     const [sizesInput, setSizesInput] = useState(''); // Comma separated
@@ -33,6 +36,7 @@ export default function AdminProducts() {
         setStock('');
         setDesc('');
         setImage('');
+        setImageFile(null);
         setSizesInput('');
         setSpecs({});
         setSpecKey('');
@@ -49,9 +53,28 @@ export default function AdminProducts() {
         setStock(p.stock.toString());
         setDesc(p.description);
         setImage(p.image);
+        setImageFile(null);
         setSizesInput(p.sizes ? p.sizes.join(', ') : '');
         setSpecs(p.specifications || {});
         window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    const handleUploadImage = async () => {
+        if (!imageFile) {
+            alert('Vui lòng chọn ảnh trước khi upload.');
+            return;
+        }
+
+        setIsUploadingImage(true);
+        try {
+            const uploadedUrl = await uploadImageToCloudinary(imageFile);
+            setImage(uploadedUrl);
+            alert('Upload ảnh thành công lên Cloudinary!');
+        } catch (error: any) {
+            alert(error?.message || 'Upload ảnh thất bại.');
+        } finally {
+            setIsUploadingImage(false);
+        }
     };
 
     const handleAddSpec = () => {
@@ -145,9 +168,31 @@ export default function AdminProducts() {
                                 </select>
                             </div>
                             <div className="form-input-group">
-                                <label>Hình ảnh (URL)</label>
-                                <input className="form-field" value={image} onChange={e => setImage(e.target.value)} placeholder="images/example.jpg" />
-                                {image && <div style={{ marginTop: '0.5rem' }}><img src={image} alt="Preview" style={{ height: '60px', borderRadius: '4px' }} /></div>}
+                                <label>Hình ảnh (Cloudinary)</label>
+                                <input
+                                    className="form-field"
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={e => setImageFile(e.target.files?.[0] || null)}
+                                />
+                                <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
+                                    <button
+                                        type="button"
+                                        className="btn outline sm"
+                                        onClick={handleUploadImage}
+                                        disabled={!imageFile || isUploadingImage}
+                                    >
+                                        {isUploadingImage ? 'Đang upload...' : 'Upload lên Cloudinary'}
+                                    </button>
+                                </div>
+                                {image && (
+                                    <div style={{ marginTop: '0.75rem' }}>
+                                        <img src={image} alt="Preview" style={{ height: '60px', borderRadius: '4px', objectFit: 'cover' }} />
+                                        <div style={{ marginTop: '0.25rem', fontSize: '0.75rem', color: '#64748b', wordBreak: 'break-all' }}>
+                                            {image}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         </div>
 
