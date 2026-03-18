@@ -1,5 +1,6 @@
 import { useAuth } from '../context/AuthContext';
 import { useRewards } from '../context/RewardsContext';
+import '../styles/user-ui.css';
 
 export default function Profile() {
     const { user, userAttributes } = useAuth();
@@ -12,11 +13,11 @@ export default function Profile() {
     };
 
     return (
-        <div className="page content" style={{ background: '#f8fafc', padding: '3rem 0' }}>
+        <div className="page content user-page profile-page">
             <div className="container">
-                <div style={{ maxWidth: '800px', margin: '0 auto' }}>
+                <div className="profile-page-wrap">
                     {/* Header */}
-                    <div className="card" style={{ padding: '2.5rem', marginBottom: '2rem', display: 'flex', alignItems: 'center', gap: '2rem', flexDirection: 'column', textAlign: 'center' }}>
+                    <div className="card profile-hero-card">
                         <div style={{ width: '100px', height: '100px', background: '#20803F', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: '2.5rem', fontWeight: 700 }}>
                             {userAttributes?.name?.[0] || user?.username?.[0] || 'U'}
                         </div>
@@ -30,7 +31,7 @@ export default function Profile() {
                     </div>
 
                     {/* Stats Grid */}
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1.5rem', marginBottom: '2rem' }}>
+                    <div className="profile-stats-grid">
                         <div className="card" style={{ padding: '1.5rem', textAlign: 'center' }}>
                             <div style={{ fontSize: '2rem', fontWeight: 700, color: '#20803F', marginBottom: '0.5rem' }}>{stats.donations}</div>
                             <div style={{ color: '#64748b', fontSize: '0.9rem' }}>Lần quyên góp</div>
@@ -48,20 +49,20 @@ export default function Profile() {
                     {/* Account Info */}
                     <div className="card" style={{ padding: '2rem' }}>
                         <h3 style={{ fontSize: '1.2rem', marginBottom: '1.5rem', borderBottom: '1px solid #eee', paddingBottom: '1rem' }}>Thông tin tài khoản</h3>
-                        <div style={{ display: 'grid', gap: '1rem' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <div className="profile-info-grid">
+                            <div className="profile-info-row">
                                 <span style={{ color: '#64748b' }}>Tên đăng nhập</span>
                                 <span style={{ fontWeight: 500 }}>{user?.username}</span>
                             </div>
-                            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                            <div className="profile-info-row">
                                 <span style={{ color: '#64748b' }}>Email</span>
                                 <span style={{ fontWeight: 500 }}>{userAttributes?.email}</span>
                             </div>
-                            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                            <div className="profile-info-row">
                                 <span style={{ color: '#64748b' }}>Họ và tên</span>
                                 <span style={{ fontWeight: 500 }}>{userAttributes?.name || 'Chưa cập nhật'}</span>
                             </div>
-                            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                            <div className="profile-info-row">
                                 <span style={{ color: '#64748b' }}>Trạng thái</span>
                                 <span style={{ color: '#20803F', fontWeight: 600 }}>Active</span>
                             </div>

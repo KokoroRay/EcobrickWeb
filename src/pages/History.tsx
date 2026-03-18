@@ -1,4 +1,6 @@
 import { useRewards } from '../context/RewardsContext';
+import '../styles/dashboard.css';
+import '../styles/user-ui.css';
 // import { formatDate } from '../utils/date'; 
 // Inline format if utils not found easily or just define it.
 // I'll define local format helper.
@@ -20,11 +22,11 @@ export default function History() {
     const redeemHistory = history.filter(h => h.type === 'redeem');
 
     return (
-        <div className="page content" style={{ background: '#f8fafc', padding: '3rem 0', minHeight: '80vh' }}>
+        <div className="page content user-page history-page">
             <div className="container">
-                <h2 className="section-title" style={{ textAlign: 'left', marginBottom: '2rem' }}>Lịch sử hoạt động</h2>
+            <h2 className="section-title user-page-title">Lịch sử hoạt động</h2>
 
-                <div style={{ display: 'grid', gap: '3rem' }}>
+            <div className="history-sections">
 
                     {/* 1. Transaction History */}
                     <div className="card" style={{ padding: '2rem' }}>
@@ -50,7 +52,7 @@ export default function History() {
                                             <div className="activity-date">{formatTime(item.createdAt)}</div>
                                             {item.note && <div style={{ fontSize: '0.85rem', color: '#64748b', marginTop: '0.2rem' }}>"{item.note}"</div>}
                                         </div>
-                                        <div style={{ textAlign: 'right' }}>
+                                        <div className="history-right-meta">
                                             <div className={`activity-amount ${item.points > 0 ? 'amount-plus' : 'amount-minus'}`}>
                                                 {item.points > 0 ? '+' : ''}{item.points} điểm
                                             </div>
@@ -74,7 +76,7 @@ export default function History() {
                         {claimedVouchers.length === 0 ? (
                             <p style={{ color: '#64748b', fontStyle: 'italic' }}>Bạn chưa đổi voucher nào.</p>
                         ) : (
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1.5rem' }}>
+                            <div className="voucher-history-grid">
                                 {claimedVouchers.map(voucher => (
                                     <div key={voucher.id} style={{ border: '1px solid #e2e8f0', borderRadius: '12px', padding: '1.25rem', background: '#fff', position: 'relative', overflow: 'hidden' }}>
                                         <div style={{ position: 'absolute', top: 0, left: 0, width: '4px', height: '100%', background: '#f59e0b' }}></div>

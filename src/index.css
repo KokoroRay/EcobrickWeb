@@ -271,6 +271,20 @@ html {
   font-weight: 600;
 }
 
+.nav-open-btn,
+.nav-close-btn {
+  display: none;
+  border: none;
+  background: transparent;
+  color: #2d3c35;
+  font-size: 1.25rem;
+  cursor: pointer;
+}
+
+.mobile-backdrop {
+  display: none;
+}
+
 /* Mobile Menu */
 @media (max-width: 1024px) {
   .navbar-list {
@@ -298,6 +312,16 @@ html {
 
   .nav-open-btn {
     display: block;
+    margin-left: auto;
+    padding: 0.5rem;
+  }
+
+  .mobile-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.45);
+    z-index: 998;
   }
 
   .navbar {
@@ -311,6 +335,8 @@ html {
     padding-top: 5rem;
     transition: left 0.3s ease;
     box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+    z-index: 999;
+    overflow-y: auto;
   }
 
   .navbar.active {
@@ -327,6 +353,26 @@ html {
   .navbar-item {
     width: 100%;
     border-bottom: 1px solid #f0f0f0;
+  }
+
+  .dropdown-menu {
+    display: block;
+    position: static;
+    box-shadow: none;
+    border: none;
+    margin-top: 0;
+    min-width: 100%;
+    padding: 0 0 0.5rem 1rem;
+    background: transparent;
+  }
+
+  .dropdown-menu::before {
+    display: none;
+  }
+
+  .dropdown-menu a {
+    padding: 0.55rem 0.5rem;
+    font-size: 0.9rem;
   }
 
   .navbar-link {
@@ -359,10 +405,25 @@ html {
     position: absolute;
     top: 1rem;
     right: 1rem;
+    padding: 0.5rem;
   }
 
   .main {
     margin-top: 64px;
+  }
+}
+
+@media (max-width: 480px) {
+  .header .container {
+    min-height: 60px;
+  }
+
+  .main {
+    margin-top: 60px;
+  }
+
+  .navbar {
+    width: 86vw;
   }
 }
 
