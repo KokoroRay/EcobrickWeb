@@ -71,7 +71,7 @@ export default function AdminOverview() {
             .map(u => ({
                 label: u.name,
                 value: Number(u.totalKg.toFixed(1)),
-                color: '#7cc6d1'
+                color: '#5daec2'
             }))
             .filter(d => d.value > 0);
     }, [allUsers]);
@@ -88,7 +88,7 @@ export default function AdminOverview() {
             .map(([label, value]) => ({
                 label,
                 value: Number(value.toFixed(1)),
-                color: '#f59e0b'
+                color: '#91c7d4'
             }))
             .sort((a, b) => b.value - a.value)
             .slice(0, 5);
@@ -156,7 +156,7 @@ export default function AdminOverview() {
                     <LineChart
                         title="Khối lượng yêu cầu mới theo ngày (7 ngày gần nhất)"
                         data={requestTrendData}
-                        color="#6fbfcb"
+                        color="#4ea2b7"
                     />
                 </div>
 

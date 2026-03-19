@@ -1,28 +1,31 @@
 :root {
-    --admin-bg: #eaf1f5;
-    --admin-bg-soft: #f4f8fb;
-    --admin-glass: rgba(255, 255, 255, 0.72);
-    --admin-glass-strong: rgba(255, 255, 255, 0.88);
-    --admin-border: rgba(117, 158, 180, 0.26);
-    --admin-text: #1d3342;
-    --admin-muted: #6e8594;
-    --admin-accent: #63b7c9;
-    --admin-accent-deep: #2a95aa;
+    --admin-bg: #0f2f26;
+    --admin-bg-soft: #184236;
+    --admin-glass: rgba(217, 233, 243, 0.46);
+    --admin-glass-strong: rgba(226, 241, 249, 0.58);
+    --admin-border: rgba(122, 161, 180, 0.34);
+    --admin-text: #172b37;
+    --admin-muted: #536b79;
+    --admin-accent: #6fb8c9;
+    --admin-accent-deep: #308ca2;
     --admin-positive: #2f9b63;
     --admin-warning: #d89a3d;
     --admin-danger: #d85d5d;
-    --admin-shadow: 0 10px 35px rgba(64, 111, 135, 0.16);
-    --admin-shadow-soft: 0 2px 10px rgba(64, 111, 135, 0.08);
+    --admin-shadow: 0 14px 38px rgba(8, 27, 22, 0.28);
+    --admin-shadow-soft: 0 4px 14px rgba(18, 40, 34, 0.16);
 }
 
 .admin-layout {
     min-height: 100vh;
     display: flex;
     flex-direction: column;
+    color: var(--admin-text);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
     background:
-        radial-gradient(circle at 14% 8%, rgba(126, 194, 206, 0.35) 0, rgba(126, 194, 206, 0) 36%),
-        radial-gradient(circle at 84% 90%, rgba(155, 201, 243, 0.24) 0, rgba(155, 201, 243, 0) 33%),
-        linear-gradient(180deg, var(--admin-bg-soft) 0%, var(--admin-bg) 100%);
+        radial-gradient(circle at 8% 6%, rgba(128, 176, 63, 0.3) 0, rgba(128, 176, 63, 0) 32%),
+        radial-gradient(circle at 90% 88%, rgba(111, 184, 201, 0.3) 0, rgba(111, 184, 201, 0) 34%),
+        linear-gradient(140deg, #1b4c3e 0%, #113629 42%, #0f2f26 100%);
 }
 
 .admin-header-nav {
@@ -32,8 +35,9 @@
     height: 74px;
     display: flex;
     align-items: center;
-    backdrop-filter: blur(14px);
-    background: linear-gradient(90deg, rgba(255, 255, 255, 0.76), rgba(237, 246, 250, 0.86));
+    backdrop-filter: blur(22px) saturate(1.15);
+    -webkit-backdrop-filter: blur(22px) saturate(1.15);
+    background: linear-gradient(90deg, rgba(212, 230, 241, 0.5), rgba(197, 219, 232, 0.55));
     border-bottom: 1px solid var(--admin-border);
     box-shadow: var(--admin-shadow-soft);
 }
@@ -62,7 +66,7 @@
     height: 42px;
     border-radius: 10px;
     border: 1px solid rgba(53, 132, 151, 0.18);
-    background: rgba(255, 255, 255, 0.7);
+    background: rgba(255, 255, 255, 0.35);
     padding: 2px;
 }
 
@@ -91,9 +95,9 @@
     gap: 0.55rem;
     border-radius: 13px;
     border: 1px solid var(--admin-border);
-    background: rgba(255, 255, 255, 0.72);
+    background: rgba(230, 244, 252, 0.44);
     padding: 0 0.95rem;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
 }
 
 .admin-top-search i {
@@ -111,7 +115,7 @@
 }
 
 .admin-top-search input::placeholder {
-    color: #86a1af;
+    color: #69818f;
 }
 
 .admin-user-controls {
@@ -128,9 +132,9 @@
     height: 36px;
     padding: 0 0.75rem;
     border-radius: 999px;
-    border: 1px solid rgba(206, 156, 83, 0.3);
-    background: rgba(255, 239, 214, 0.62);
-    color: #87530f;
+    border: 1px solid rgba(60, 138, 94, 0.34);
+    background: rgba(220, 244, 229, 0.56);
+    color: #1f7247;
     font-size: 0.78rem;
     font-weight: 700;
 }
@@ -140,7 +144,7 @@
     height: 36px;
     border: 1px solid var(--admin-border);
     border-radius: 10px;
-    background: rgba(255, 255, 255, 0.8);
+    background: rgba(229, 244, 252, 0.42);
     color: var(--admin-muted);
     cursor: pointer;
 }
@@ -157,7 +161,7 @@
     padding: 0.25rem 0.35rem 0.25rem 0.25rem;
     border-radius: 999px;
     border: 1px solid var(--admin-border);
-    background: rgba(255, 255, 255, 0.75);
+    background: rgba(226, 242, 251, 0.45);
 }
 
 .avatar-circle {
@@ -175,7 +179,7 @@
 
 .admin-name {
     font-size: 0.86rem;
-    font-weight: 700;
+    font-weight: 800;
     color: var(--admin-text);
     padding-right: 0.25rem;
 }
@@ -187,8 +191,9 @@
     min-width: 190px;
     border-radius: 12px;
     border: 1px solid var(--admin-border);
-    background: var(--admin-glass-strong);
-    backdrop-filter: blur(10px);
+    background: rgba(225, 240, 248, 0.54);
+    backdrop-filter: blur(18px) saturate(1.08);
+    -webkit-backdrop-filter: blur(18px) saturate(1.08);
     box-shadow: var(--admin-shadow);
     overflow: hidden;
     z-index: 120;
@@ -198,7 +203,7 @@
 .dropdown-item {
     padding: 0.8rem 1rem;
     font-size: 0.9rem;
-    color: #355063;
+    color: #274252;
     transition: all 0.18s ease;
     display: flex;
     align-items: center;
@@ -213,7 +218,7 @@
 .admin-body {
     display: flex;
     flex: 1;
-    gap: 1.25rem;
+    gap: 1rem;
     padding: 1.25rem;
 }
 
@@ -225,8 +230,9 @@
     justify-content: space-between;
     border-radius: 20px;
     border: 1px solid var(--admin-border);
-    background: linear-gradient(180deg, rgba(123, 198, 212, 0.3), rgba(255, 255, 255, 0.65));
-    backdrop-filter: blur(8px);
+    background: linear-gradient(180deg, rgba(132, 197, 211, 0.3), rgba(213, 233, 244, 0.38));
+    backdrop-filter: blur(16px) saturate(1.05);
+    -webkit-backdrop-filter: blur(16px) saturate(1.05);
     box-shadow: var(--admin-shadow-soft);
     padding: 1rem;
     position: sticky;
@@ -244,7 +250,7 @@
     font-size: 0.78rem;
     text-transform: uppercase;
     letter-spacing: 0.08em;
-    color: #386678;
+    color: #264f5f;
     font-weight: 700;
     margin-bottom: 0.8rem;
     padding-left: 0.4rem;
@@ -266,7 +272,7 @@
     cursor: pointer;
     font-size: 0.92rem;
     font-weight: 600;
-    color: #3c5e70;
+    color: #244755;
     border-radius: 12px;
     padding: 0.72rem 0.86rem;
     transition: all 0.18s ease;
@@ -275,13 +281,13 @@
 }
 
 .admin-nav-link:hover {
-    background: rgba(255, 255, 255, 0.62);
-    color: #184556;
+    background: rgba(231, 244, 252, 0.45);
+    color: #113f50;
 }
 
 .admin-nav-link.active {
-    background: linear-gradient(135deg, rgba(83, 183, 204, 0.32), rgba(255, 255, 255, 0.75));
-    color: #114153;
+    background: linear-gradient(135deg, rgba(87, 180, 199, 0.32), rgba(232, 246, 253, 0.56));
+    color: #0d3543;
     box-shadow: inset 0 0 0 1px rgba(77, 149, 168, 0.25);
 }
 
@@ -297,10 +303,10 @@
 
 .admin-side-tip {
     border-radius: 11px;
-    background: rgba(255, 255, 255, 0.62);
+    background: rgba(225, 241, 249, 0.5);
     border: 1px solid rgba(114, 156, 177, 0.2);
     font-size: 0.77rem;
-    color: #406171;
+    color: #2d5362;
     line-height: 1.45;
     padding: 0.7rem 0.75rem;
     display: flex;
@@ -311,7 +317,7 @@
 
 .admin-version {
     font-size: 0.72rem;
-    color: #6f8794;
+    color: #4e6875;
     text-align: center;
 }
 
@@ -320,8 +326,9 @@
     min-width: 0;
     border-radius: 22px;
     border: 1px solid var(--admin-border);
-    background: var(--admin-glass);
-    backdrop-filter: blur(8px);
+    background: linear-gradient(180deg, rgba(220, 236, 247, 0.46), rgba(208, 228, 241, 0.4));
+    backdrop-filter: blur(18px) saturate(1.08);
+    -webkit-backdrop-filter: blur(18px) saturate(1.08);
     box-shadow: var(--admin-shadow-soft);
     padding: 1.6rem;
 }
@@ -343,7 +350,7 @@
 }
 
 .admin-page-desc {
-    color: #658090;
+    color: #445d6a;
     font-size: 0.95rem;
     max-width: 760px;
 }
@@ -353,8 +360,8 @@
     align-items: center;
     gap: 0.45rem;
     border-radius: 999px;
-    border: 1px solid rgba(73, 149, 169, 0.28);
-    background: rgba(221, 244, 250, 0.75);
+    border: 1px solid rgba(59, 139, 157, 0.35);
+    background: rgba(210, 236, 246, 0.66);
     color: #1e6175;
     font-size: 0.78rem;
     font-weight: 700;
@@ -372,7 +379,7 @@
 .stat-widget {
     border-radius: 16px;
     border: 1px solid rgba(120, 164, 186, 0.28);
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.78), rgba(242, 250, 255, 0.6));
+    background: linear-gradient(180deg, rgba(233, 246, 252, 0.48), rgba(220, 236, 247, 0.4));
     box-shadow: var(--admin-shadow-soft);
     padding: 1rem 1.05rem;
     display: flex;
@@ -381,11 +388,11 @@
 
 .stat-widget-warning {
     border-color: rgba(210, 151, 64, 0.3);
-    background: linear-gradient(180deg, rgba(255, 251, 235, 0.8), rgba(255, 245, 226, 0.62));
+    background: linear-gradient(180deg, rgba(255, 251, 235, 0.56), rgba(255, 245, 226, 0.46));
 }
 
 .stat-label {
-    color: #6c8391;
+    color: #45606e;
     font-size: 0.77rem;
     font-weight: 700;
     text-transform: uppercase;
@@ -402,7 +409,7 @@
 
 .stat-subtext {
     font-size: 0.82rem;
-    color: #3f7184;
+    color: #2e5f72;
     display: inline-flex;
     align-items: center;
     gap: 0.4rem;
@@ -418,14 +425,14 @@
 .insight-card {
     border-radius: 14px;
     border: 1px solid rgba(120, 164, 186, 0.28);
-    background: rgba(255, 255, 255, 0.68);
+    background: rgba(224, 241, 250, 0.44);
     box-shadow: var(--admin-shadow-soft);
     padding: 1rem;
 }
 
 .insight-title {
     font-size: 0.78rem;
-    color: #6a8393;
+    color: #456473;
     text-transform: uppercase;
     letter-spacing: 0.07em;
     font-weight: 700;
@@ -441,7 +448,7 @@
 
 .insight-meta {
     font-size: 0.86rem;
-    color: #587080;
+    color: #395765;
 }
 
 .chart-grid {
@@ -454,7 +461,7 @@
 .chart-card {
     border-radius: 16px;
     border: 1px solid rgba(120, 164, 186, 0.26);
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.82), rgba(240, 248, 252, 0.62));
+    background: linear-gradient(180deg, rgba(231, 246, 253, 0.52), rgba(214, 233, 245, 0.42));
     box-shadow: var(--admin-shadow-soft);
     padding: 1rem;
     overflow: hidden;
@@ -463,7 +470,7 @@
 .chart-title {
     font-size: 0.96rem;
     font-weight: 700;
-    color: #325062;
+    color: #1f4252;
     margin-bottom: 1rem;
     display: flex;
     align-items: center;
@@ -498,15 +505,12 @@
     r: 5;
 }
 
-.chart-placeholder {
-    color: #90a5b2;
-    font-style: italic;
-}
-
 .table-card {
     border-radius: 16px;
     border: 1px solid rgba(120, 164, 186, 0.25);
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.84), rgba(246, 251, 255, 0.7));
+    background: linear-gradient(180deg, rgba(230, 245, 253, 0.5), rgba(215, 234, 246, 0.4));
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     box-shadow: var(--admin-shadow-soft);
     overflow: hidden;
 }
@@ -528,20 +532,20 @@
 }
 
 .pro-table th {
-    background: rgba(218, 237, 246, 0.55);
+    background: rgba(204, 226, 238, 0.58);
     padding: 0.88rem 1rem;
     text-align: left;
     font-size: 0.72rem;
     text-transform: uppercase;
     letter-spacing: 0.07em;
-    color: #4f6a79;
+    color: #2f4f5f;
     font-weight: 700;
     border-bottom: 1px solid rgba(120, 164, 186, 0.18);
 }
 
 .pro-table td {
     padding: 0.85rem 1rem;
-    color: #2f4b5c;
+    color: #223f4f;
     border-bottom: 1px solid rgba(120, 164, 186, 0.15);
     vertical-align: middle;
 }
@@ -551,7 +555,7 @@
 }
 
 .pro-table tr:hover td {
-    background: rgba(235, 246, 252, 0.55);
+    background: rgba(222, 238, 247, 0.52);
 }
 
 .badge-status {
@@ -589,7 +593,7 @@
     border-radius: 14px;
     border: 1px dashed rgba(126, 167, 188, 0.45);
     color: #6f8794;
-    background: rgba(255, 255, 255, 0.55);
+    background: rgba(230, 244, 252, 0.38);
 }
 
 .admin-empty-state i {
@@ -604,9 +608,25 @@
 }
 
 .admin-modal {
-    background: rgba(255, 255, 255, 0.96);
+    background: rgba(232, 244, 251, 0.88);
     border: 1px solid rgba(120, 164, 186, 0.32);
     box-shadow: var(--admin-shadow);
+}
+
+.glass-card {
+    position: relative;
+    overflow: hidden;
+}
+
+.glass-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -35%;
+    width: 58%;
+    height: 100%;
+    background: linear-gradient(120deg, rgba(255, 255, 255, 0.34), rgba(255, 255, 255, 0));
+    pointer-events: none;
 }
 
 .text-bold {
@@ -614,7 +634,7 @@
 }
 
 .text-muted {
-    color: #708897;
+    color: #4f6775;
 }
 
 .text-sm {
@@ -638,10 +658,6 @@
 }
 
 @media (max-width: 1180px) {
-    .admin-nav-container {
-        grid-template-columns: auto 1fr auto;
-    }
-
     .admin-top-search {
         max-width: 100%;
     }
@@ -664,14 +680,6 @@
         position: static;
         border-radius: 16px;
         padding: 0.7rem;
-    }
-
-    .admin-side-top {
-        width: 100%;
-    }
-
-    .admin-side-title {
-        margin-bottom: 0.6rem;
     }
 
     .admin-side-nav {
