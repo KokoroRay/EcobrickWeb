@@ -6,7 +6,7 @@ type BarData = { label: string; value: number; color?: string };
 type PieData = { label: string; value: number; color: string };
 
 // --- 1. Line Chart (Growth Trend) ---
-export const LineChart = ({ data, title, color = "#20803F" }: { data: LineData[]; title?: string; color?: string }) => {
+export const LineChart = ({ data, title, color = "#20803F", xAxisMode = 'date', showValueLabels = true }: { data: LineData[]; title?: string; color?: string; xAxisMode?: 'date' | 'time'; showValueLabels?: boolean }) => {
     if (data.length === 0) return <ChartPlaceholder message="Chưa có dữ liệu theo thời gian" />;
 
     const height = 250;
@@ -71,11 +71,23 @@ export const LineChart = ({ data, title, color = "#20803F" }: { data: LineData[]
                 {data.map((d, i) => {
                     const x = pointsArray[i].x;
                     const y = pointsArray[i].y;
+                    const xLabel = xAxisMode === 'time' ? d.date : d.date.slice(5);
                     return (
                         <g key={i} className="chart-tooltip-trigger">
                             <circle cx={x} cy={y} r="4" fill="white" stroke={color} strokeWidth="2" />
-                            <text x={x} y={y - 12} textAnchor="middle" fontSize="11" fontWeight="bold" fill="#334155">{d.value}</text>
-                            <text x={x} y={height - padding + 15} textAnchor="middle" fontSize="10" fill="#64748b">{d.date.slice(5)}</text>
+                            {showValueLabels && (
+                                <text x={x} y={y - 12} textAnchor="middle" fontSize="11" fontWeight="bold" fill="#334155">{d.value}</text>
+                            )}
+                            <text
+                                x={x}
+                                y={height - padding + (xAxisMode === 'time' ? 18 : 15)}
+                                textAnchor="middle"
+                                fontSize={xAxisMode === 'time' ? '8' : '10'}
+                                fill="#64748b"
+                                transform={xAxisMode === 'time' ? `rotate(-32 ${x} ${height - padding + 18})` : undefined}
+                            >
+                                {xLabel}
+                            </text>
                         </g>
                     );
                 })}
