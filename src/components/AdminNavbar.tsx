@@ -30,11 +30,6 @@ export default function AdminNavbar() {
                     <span className="logo-text">Ecobrick <span className="logo-badge">Admin</span></span>
                 </Link>
 
-                <div className="admin-top-search" role="search">
-                    <i className="fa-solid fa-magnifying-glass"></i>
-                    <input type="text" placeholder="Tìm module, người dùng, đơn quyên góp..." />
-                </div>
-
                 <div className="admin-user-controls">
                     <div className="admin-status-chip">
                         <i className="fa-solid fa-inbox"></i>

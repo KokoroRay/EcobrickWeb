@@ -3,7 +3,7 @@ import { useRewards } from '../../context/RewardsContext';
 import { LineChart, BarChart, PieChart } from '../../components/AdminCharts';
 
 export default function AdminOverview() {
-    const { allUsers, pendingDonations } = useRewards();
+    const { allUsers, pendingDonations, adminDailyTimeline } = useRewards();
 
     const totalUsers = allUsers.length;
     const activeContributors = allUsers.filter(u => u.totalKg > 0).length;
@@ -24,9 +24,30 @@ export default function AdminOverview() {
 
     // --- Chart Data Preparation ---
 
-    // 1. Line Chart: New requests over last 7 days
+    // 1. Line Chart: Daily plastic volume over last 7 days
     const requestTrendData = useMemo(() => {
-        const donations = [...pendingDonations]
+        if (adminDailyTimeline.length > 0) {
+            return adminDailyTimeline.map((item) => ({
+                date: item.date,
+                value: Number((item.value || 0).toFixed(2)),
+            }));
+        }
+
+        const donationsFromHistory = allUsers
+            .flatMap((u) => u.history)
+            .filter((h) => h.type === 'donate' && !!h.createdAt)
+            .map((h) => ({
+                createdAt: h.createdAt,
+                kg: Number(h.kg || 0),
+            }));
+
+        const donationsFromPending = pendingDonations.map((d) => ({
+            createdAt: d.createdAt,
+            kg: Number(d.kg || 0),
+        }));
+
+        const donations = [...donationsFromHistory, ...donationsFromPending]
+            .filter((d) => !Number.isNaN(new Date(d.createdAt).getTime()))
             .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
 
         const grouped: Record<string, number> = {};
@@ -35,18 +56,19 @@ export default function AdminOverview() {
             grouped[date] = (grouped[date] || 0) + d.kg;
         });
 
-        const timeline = Object.keys(grouped).map(date => ({
-            date,
-            value: grouped[date]
-        }));
+        // Always return a 7-day timeline to avoid empty-state chart flicker.
+        const timeline = Array.from({ length: 7 }, (_, index) => {
+            const date = new Date();
+            date.setDate(date.getDate() - (6 - index));
+            const key = date.toISOString().slice(0, 10);
+            return {
+                date: key,
+                value: Number((grouped[key] || 0).toFixed(2)),
+            };
+        });
 
-        if (timeline.length === 1) {
-            const prevDate = new Date(timeline[0].date);
-            prevDate.setDate(prevDate.getDate() - 1);
-            return [{ date: prevDate.toISOString().slice(0, 10), value: 0 }, ...timeline];
-        }
-        return timeline.slice(-7);
-    }, [pendingDonations]);
+        return timeline;
+    }, [allUsers, pendingDonations, adminDailyTimeline]);
 
     // 2. Pie Chart: User quality segmentation
     const userSegmentData = useMemo(() => {
@@ -84,7 +106,7 @@ export default function AdminOverview() {
             grouped[key] = (grouped[key] || 0) + item.kg;
         });
 
-        return Object.entries(grouped)
+        const pendingData = Object.entries(grouped)
             .map(([label, value]) => ({
                 label,
                 value: Number(value.toFixed(1)),
@@ -92,7 +114,20 @@ export default function AdminOverview() {
             }))
             .sort((a, b) => b.value - a.value)
             .slice(0, 5);
-    }, [pendingDonations]);
+
+        if (pendingData.length > 0) {
+            return pendingData;
+        }
+
+        return [...allUsers]
+            .sort((a, b) => b.totalKg - a.totalKg)
+            .slice(0, 5)
+            .map((u) => ({
+                label: u.name,
+                value: Number((u.totalKg || 0).toFixed(1)),
+                color: '#9ccddb'
+            }));
+    }, [pendingDonations, allUsers]);
 
     return (
         <div className="overview-shell">
@@ -154,7 +189,7 @@ export default function AdminOverview() {
             <div className="chart-grid">
                 <div className="chart-card" style={{ gridColumn: '1 / -1' }}>
                     <LineChart
-                        title="Khối lượng yêu cầu mới theo ngày (7 ngày gần nhất)"
+                        title="Khối lượng nhựa theo ngày (7 ngày gần nhất)"
                         data={requestTrendData}
                         color="#4ea2b7"
                     />
@@ -176,7 +211,7 @@ export default function AdminOverview() {
 
                 <div className="chart-card" style={{ gridColumn: '1 / -1' }}>
                     <BarChart
-                        title="Khối lượng chờ duyệt theo thành viên"
+                        title={pendingDonations.length > 0 ? 'Khối lượng chờ duyệt theo thành viên' : 'Khối lượng đóng góp theo thành viên'}
                         data={pendingByUserData}
                     />
                 </div>

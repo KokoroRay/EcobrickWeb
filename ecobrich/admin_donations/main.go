@@ -32,6 +32,12 @@ type DonationItem struct {
 type ListResponse struct {
 	Donations []DonationItem `json:"donations"`
 	Count     int            `json:"count"`
+	Timeline  []DailyStat    `json:"timeline"`
+}
+
+type DailyStat struct {
+	Date  string  `json:"date"`
+	Value float64 `json:"value"`
 }
 
 type ReviewRequest struct {
@@ -155,8 +161,81 @@ func listPendingDonations(ctx context.Context, headers map[string]string) (event
 		})
 	}
 
-	resBody, _ := json.Marshal(ListResponse{Donations: donations, Count: len(donations)})
+	timeline, timelineErr := buildDailyTimeline(ctx)
+	if timelineErr != nil {
+		timeline = buildEmptyTimeline()
+	}
+
+	resBody, _ := json.Marshal(ListResponse{Donations: donations, Count: len(donations), Timeline: timeline})
 	return events.APIGatewayProxyResponse{StatusCode: 200, Headers: headers, Body: string(resBody)}, nil
+}
+
+func buildDailyTimeline(ctx context.Context) ([]DailyStat, error) {
+	out, err := dbClient.Scan(ctx, &dynamodb.ScanInput{
+		TableName:        aws.String(tableName),
+		FilterExpression: aws.String("#t = :donate"),
+		ExpressionAttributeNames: map[string]string{
+			"#t": "Type",
+		},
+		ExpressionAttributeValues: map[string]types.AttributeValue{
+			":donate": &types.AttributeValueMemberS{Value: "DONATE"},
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	grouped := map[string]float64{}
+	now := time.Now().UTC()
+	start := now.AddDate(0, 0, -6)
+
+	for _, item := range out.Items {
+		status := strings.ToLower(parseString(item["Status"]))
+		if status == "rejected" {
+			continue
+		}
+
+		createdAt := parseString(item["CreatedAt"])
+		if createdAt == "" {
+			continue
+		}
+
+		ts, parseErr := time.Parse(time.RFC3339, createdAt)
+		if parseErr != nil {
+			continue
+		}
+
+		day := ts.UTC()
+		if day.Before(start) || day.After(now.Add(24*time.Hour)) {
+			continue
+		}
+
+		key := day.Format("2006-01-02")
+		grouped[key] += parseNumber(item["AmountKg"])
+	}
+
+	result := make([]DailyStat, 0, 7)
+	for i := 0; i < 7; i++ {
+		d := start.AddDate(0, 0, i)
+		key := d.Format("2006-01-02")
+		result = append(result, DailyStat{
+			Date:  key,
+			Value: grouped[key],
+		})
+	}
+
+	return result, nil
+}
+
+func buildEmptyTimeline() []DailyStat {
+	now := time.Now().UTC()
+	start := now.AddDate(0, 0, -6)
+	result := make([]DailyStat, 0, 7)
+	for i := 0; i < 7; i++ {
+		d := start.AddDate(0, 0, i)
+		result = append(result, DailyStat{Date: d.Format("2006-01-02"), Value: 0})
+	}
+	return result
 }
 
 func reviewDonation(ctx context.Context, request events.APIGatewayProxyRequest, headers map[string]string) (events.APIGatewayProxyResponse, error) {
