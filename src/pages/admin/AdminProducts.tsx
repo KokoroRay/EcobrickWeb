@@ -19,6 +19,7 @@ export default function AdminProducts() {
     const [image, setImage] = useState('');
     const [imageFile, setImageFile] = useState<File | null>(null);
     const [isUploadingImage, setIsUploadingImage] = useState(false);
+    const [uploadError, setUploadError] = useState('');
 
     // New Fields
     const [sizesInput, setSizesInput] = useState(''); // Comma separated
@@ -66,12 +67,33 @@ export default function AdminProducts() {
         }
 
         setIsUploadingImage(true);
+        setUploadError('');
         try {
             const uploadedUrl = await uploadImageToCloudinary(imageFile);
             setImage(uploadedUrl);
             alert('Upload ảnh thành công lên Cloudinary!');
         } catch (error: any) {
-            alert(error?.message || 'Upload ảnh thất bại.');
+            const message = error?.message || 'Upload ảnh thất bại.';
+            setUploadError(message);
+            alert(message);
+        } finally {
+            setIsUploadingImage(false);
+        }
+    };
+
+    const handleImageFileChange = async (file: File | null) => {
+        setImageFile(file);
+        setUploadError('');
+
+        if (!file) return;
+
+        setIsUploadingImage(true);
+        try {
+            const uploadedUrl = await uploadImageToCloudinary(file);
+            setImage(uploadedUrl);
+        } catch (error: any) {
+            const message = error?.message || 'Upload ảnh thất bại.';
+            setUploadError(message);
         } finally {
             setIsUploadingImage(false);
         }
@@ -96,6 +118,11 @@ export default function AdminProducts() {
     const handleSubmit = () => {
         if (!name || !slug || !price) {
             alert("Tên, Slug và Giá là bắt buộc.");
+            return;
+        }
+
+        if (!image) {
+            alert('Vui lòng upload ảnh lên Cloudinary trước khi lưu sản phẩm.');
             return;
         }
 
@@ -173,7 +200,7 @@ export default function AdminProducts() {
                                     className="form-field"
                                     type="file"
                                     accept="image/*"
-                                    onChange={e => setImageFile(e.target.files?.[0] || null)}
+                                    onChange={e => handleImageFileChange(e.target.files?.[0] || null)}
                                 />
                                 <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
                                     <button
@@ -185,6 +212,11 @@ export default function AdminProducts() {
                                         {isUploadingImage ? 'Đang upload...' : 'Upload lên Cloudinary'}
                                     </button>
                                 </div>
+                                {uploadError && (
+                                    <div style={{ marginTop: '0.5rem', color: '#b91c1c', fontSize: '0.85rem' }}>
+                                        {uploadError}
+                                    </div>
+                                )}
                                 {image && (
                                     <div style={{ marginTop: '0.75rem' }}>
                                         <img src={image} alt="Preview" style={{ height: '60px', borderRadius: '4px', objectFit: 'cover' }} />
@@ -229,7 +261,7 @@ export default function AdminProducts() {
 
                     <div style={{ textAlign: 'right', marginTop: '2rem', borderTop: '1px solid #eee', paddingTop: '1rem' }}>
                         <button className="btn outline" onClick={resetForm} style={{ marginRight: '1rem' }}>Hủy bỏ</button>
-                        <button className="btn primary" onClick={handleSubmit}>
+                        <button className="btn primary" onClick={handleSubmit} disabled={isUploadingImage}>
                             <i className="fa-solid fa-save"></i> {id ? 'Lưu thay đổi' : 'Tạo sản phẩm'}
                         </button>
                     </div>

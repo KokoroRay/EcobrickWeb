@@ -18,6 +18,7 @@ const initialMockUsers: Record<string, UserRewardProfile> = {};
 
 type RewardsState = {
   points: number;
+  totalKg: number;
   history: RewardHistoryEntry[];
   claimedVouchers: Voucher[];
   pendingDonations: AdminPendingDonation[];
@@ -92,6 +93,7 @@ export function RewardsProvider({ children }: { children: ReactNode }) {
   }, [isAuthenticated, currentUserId, usersDb, user]);
 
   const points = userProfile?.points || 0;
+  const totalKg = userProfile?.totalKg || 0;
   const history = userProfile?.history || [];
   const claimedVouchers = userProfile?.claimedVouchers || [];
 
@@ -131,9 +133,11 @@ export function RewardsProvider({ children }: { children: ReactNode }) {
       if (res.ok) {
         const data = await res.json();
 
-        // Handle new response format { vouchers: [], user_points: number }
+        // Handle response format { vouchers: [], user_points: number, user_total_kg, history: [] }
         let rawVouchers = [];
         let backendPoints = 0;
+        let backendTotalKg = 0;
+        let backendHistory: RewardHistoryEntry[] = [];
 
         if (Array.isArray(data)) {
           // Legacy fallback
@@ -141,6 +145,18 @@ export function RewardsProvider({ children }: { children: ReactNode }) {
         } else if (data && typeof data === 'object') {
           rawVouchers = data.vouchers || [];
           backendPoints = data.user_points || 0;
+          backendTotalKg = data.user_total_kg || 0;
+          const rawHistory = Array.isArray(data.history) ? data.history : [];
+          backendHistory = rawHistory.map((entry: any, index: number) => ({
+            id: String(entry.id || `history-${index}`),
+            userId: currentUserId,
+            type: (entry.type === 'redeem' || entry.type === 'admin_adjust' ? entry.type : 'donate') as RewardHistoryEntry['type'],
+            kg: Number(entry.kg || 0),
+            points: Number(entry.points || 0),
+            note: String(entry.note || ''),
+            status: (String(entry.status || 'approved') as RewardHistoryEntry['status']),
+            createdAt: String(entry.created_at || new Date().toISOString()),
+          }));
         }
 
         // Map snake_case from Backend to camelCase for Frontend
@@ -171,7 +187,9 @@ export function RewardsProvider({ children }: { children: ReactNode }) {
               ...prev,
               [currentUserId]: {
                 ...profile,
-                points: backendPoints // SYNC POINTS FROM BACKEND
+                points: backendPoints,
+                totalKg: backendTotalKg,
+                history: backendHistory
               }
             };
           });
@@ -306,6 +324,16 @@ export function RewardsProvider({ children }: { children: ReactNode }) {
     return () => window.clearInterval(id);
   }, [isAuthenticated, role, fetchAllUsers, fetchPendingDonations]);
 
+  useEffect(() => {
+    if (!isAuthenticated || role === 'admin') return;
+
+    const id = window.setInterval(() => {
+      fetchVouchers();
+    }, 15000);
+
+    return () => window.clearInterval(id);
+  }, [isAuthenticated, role, fetchVouchers]);
+
 
   // --- ADD DONATION ---
   const addDonation = useCallback(async (kg: number, note = 'Quyên góp') => {
@@ -322,32 +350,12 @@ export function RewardsProvider({ children }: { children: ReactNode }) {
       });
       if (res.ok) {
         alert("Gửi thành công!");
-        // Optimistic update
-        setUsersDb(prev => {
-          const p = prev[currentUserId];
-          if (!p) return prev;
-          return {
-            ...prev,
-            [currentUserId]: {
-              ...p,
-              history: [{
-                id: `local-${Date.now()}`,
-                userId: currentUserId,
-                type: 'donate',
-                kg,
-                points: kg * 10,
-                note,
-                status: 'pending',
-                createdAt: new Date().toISOString()
-              }, ...p.history]
-            }
-          };
-        });
+        await fetchVouchers();
         return true;
       }
     } catch (e) { console.error(e); }
     return false;
-  }, [isAuthenticated, currentUserId]);
+  }, [isAuthenticated, fetchVouchers]);
 
 
   // --- REDEEM ---
@@ -537,7 +545,7 @@ export function RewardsProvider({ children }: { children: ReactNode }) {
 
   return (
     <RewardsContext.Provider value={{
-      points, history, claimedVouchers, pendingDonations, allUsers: Object.values(usersDb),
+      points, totalKg, history, claimedVouchers, pendingDonations, allUsers: Object.values(usersDb),
       config, availableVouchers: availableVouchers,
       addDonation, redeemOption, updatePointsPerKg,
       addVoucher, deleteVoucher, editVoucher,

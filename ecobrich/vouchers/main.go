@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math/rand"
 	"os"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -74,8 +75,20 @@ func handleRequest(ctx context.Context, request events.APIGatewayProxyRequest) (
 }
 
 type ListResponse struct {
-	Vouchers   []Voucher `json:"vouchers"`
-	UserPoints float64   `json:"user_points"`
+	Vouchers    []Voucher          `json:"vouchers"`
+	UserPoints  float64            `json:"user_points"`
+	UserTotalKg float64            `json:"user_total_kg"`
+	History     []HistoryListEntry `json:"history"`
+}
+
+type HistoryListEntry struct {
+	ID        string  `json:"id"`
+	Type      string  `json:"type"`
+	Kg        float64 `json:"kg"`
+	Points    float64 `json:"points"`
+	Note      string  `json:"note"`
+	Status    string  `json:"status"`
+	CreatedAt string  `json:"created_at"`
 }
 
 func listVouchers(ctx context.Context, headers map[string]string, userID string) (events.APIGatewayProxyResponse, error) {
@@ -121,6 +134,8 @@ func listVouchers(ctx context.Context, headers map[string]string, userID string)
 
 	// 2. Calculate User Points if Logged In
 	userPoints := 0.0
+	userTotalKg := 0.0
+	history := []HistoryListEntry{}
 	if userID != "" {
 		pOut, err := dbClient.Query(ctx, &dynamodb.QueryInput{
 			TableName:              aws.String(tableName),
@@ -131,27 +146,94 @@ func listVouchers(ctx context.Context, headers map[string]string, userID string)
 		})
 		if err == nil {
 			for _, item := range pOut.Items {
+				sk := ""
+				if val, ok := item["SK"].(*types.AttributeValueMemberS); ok {
+					sk = val.Value
+				}
+
+				if sk == "PROFILE" {
+					if kgVal, ok := item["TotalKg"].(*types.AttributeValueMemberN); ok {
+						kg, _ := strconv.ParseFloat(kgVal.Value, 64)
+						userTotalKg = kg
+					}
+					continue
+				}
+
+				typeValue := ""
+				if val, ok := item["Type"].(*types.AttributeValueMemberS); ok {
+					typeValue = strings.ToUpper(val.Value)
+				}
+
 				status := ""
 				if val, ok := item["Status"].(*types.AttributeValueMemberS); ok {
 					status = val.Value
 				}
-				if status == "approved" || status == "" {
-					if pVal, ok := item["PointsEarned"].(*types.AttributeValueMemberN); ok {
-						p, _ := strconv.ParseFloat(pVal.Value, 64)
+
+				createdAt := ""
+				if val, ok := item["CreatedAt"].(*types.AttributeValueMemberS); ok {
+					createdAt = val.Value
+				}
+
+				note := ""
+				if val, ok := item["Note"].(*types.AttributeValueMemberS); ok {
+					note = val.Value
+				}
+
+				kg := 0.0
+				if val, ok := item["AmountKg"].(*types.AttributeValueMemberN); ok {
+					kg, _ = strconv.ParseFloat(val.Value, 64)
+				}
+
+				entryPoints := 0.0
+				if pVal, ok := item["PointsEarned"].(*types.AttributeValueMemberN); ok {
+					p, _ := strconv.ParseFloat(pVal.Value, 64)
+					entryPoints += p
+					if status == "approved" || status == "" {
 						userPoints += p
 					}
-					if pVal, ok := item["PointsSpent"].(*types.AttributeValueMemberN); ok {
-						p, _ := strconv.ParseFloat(pVal.Value, 64)
+				}
+				if pVal, ok := item["PointsSpent"].(*types.AttributeValueMemberN); ok {
+					p, _ := strconv.ParseFloat(pVal.Value, 64)
+					entryPoints -= p
+					if status == "approved" || status == "" {
 						userPoints -= p
 					}
 				}
+
+				historyType := ""
+				switch typeValue {
+				case "DONATE":
+					historyType = "donate"
+				case "REDEEM":
+					historyType = "redeem"
+				case "ADMIN_AWARD":
+					historyType = "admin_adjust"
+				}
+
+				if historyType != "" {
+					history = append(history, HistoryListEntry{
+						ID:        sk,
+						Type:      historyType,
+						Kg:        kg,
+						Points:    entryPoints,
+						Note:      note,
+						Status:    status,
+						CreatedAt: createdAt,
+					})
+				}
 			}
 		}
+
+		sort.Slice(history, func(i, j int) bool {
+			return history[i].CreatedAt > history[j].CreatedAt
+		})
 	}
 
 	resp := ListResponse{
-		Vouchers:   vouchers,
-		UserPoints: userPoints,
+		Vouchers:    vouchers,
+		UserPoints:  userPoints,
+		UserTotalKg: userTotalKg,
+		History:     history,
 	}
 
 	body, _ := json.Marshal(resp)

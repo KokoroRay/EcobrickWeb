@@ -1,5 +1,5 @@
-import { useNavigate } from 'react-router-dom';
-import { useState, useEffect, useRef } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { useState, useEffect, useRef, type FormEvent } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { getAssetPath } from '../utils/assets';
 import { useCart } from '../context/CartContext';
@@ -11,10 +11,13 @@ const navLinkClass = ({ isActive }: { isActive: boolean }) =>
 export default function Header() {
   const [query, setQuery] = useState('');
   const [showDropdown, setShowDropdown] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
   const { isAuthenticated, user, userAttributes, logout, role } = useAuth();
   const { cartCount } = useCart();
   const dropdownRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
+  const location = useLocation();
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -47,7 +50,30 @@ export default function Header() {
   const handleLogout = async () => {
     await logout();
     setShowDropdown(false);
+    setIsMobileMenuOpen(false);
+    setIsMobileSearchOpen(false);
     navigate('/');
+  };
+
+  const closeMobileMenu = () => setIsMobileMenuOpen(false);
+
+  const openMobileMenu = () => {
+    setIsMobileSearchOpen(false);
+    setIsMobileMenuOpen(true);
+  };
+
+  const toggleMobileSearch = () => {
+    setIsMobileMenuOpen(false);
+    setIsMobileSearchOpen((prev) => !prev);
+  };
+
+  const handleSearchSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const trimmedQuery = query.trim();
+    navigate(trimmedQuery ? `/products?q=${encodeURIComponent(trimmedQuery)}` : '/products');
+    setIsMobileMenuOpen(false);
+    setIsMobileSearchOpen(false);
+    setShowDropdown(false);
   };
 
   const getInitials = () => {
@@ -61,10 +87,16 @@ export default function Header() {
     return user?.username?.[0]?.toUpperCase() || 'U';
   };
 
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
+    setIsMobileSearchOpen(false);
+    setShowDropdown(false);
+  }, [location.pathname, location.search]);
+
   return (
     <header className="header" data-header>
       <div className="container" style={{ position: 'relative' }}>
-        <div className="overlay" data-overlay></div>
+        {isMobileMenuOpen && <div className="mobile-backdrop" onClick={closeMobileMenu}></div>}
         <Link to="/" className="logo">
           <img
             src={getAssetPath('LogoEBcolor.png')}
@@ -74,39 +106,92 @@ export default function Header() {
           />
         </Link>
 
+        <div className="mobile-header-actions">
+          <button
+            className="mobile-search-toggle"
+            type="button"
+            aria-label="Mở tìm kiếm"
+            onClick={toggleMobileSearch}
+          >
+            <i className="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+          </button>
+
+          <button
+            className="nav-open-btn"
+            type="button"
+            aria-label="Mở menu"
+            onClick={openMobileMenu}
+          >
+            <i className="fa-solid fa-bars" aria-hidden="true"></i>
+          </button>
+        </div>
+
+        <div className={`mobile-search-panel ${isMobileSearchOpen ? 'active' : ''}`}>
+          <form className="search-bar" onSubmit={handleSearchSubmit}>
+            <button type="submit" className="search-icon-btn" aria-label="Tìm kiếm">
+              <i className="fa-solid fa-magnifying-glass search-icon" aria-hidden="true"></i>
+            </button>
+            <input
+              type="text"
+              placeholder="Tìm sản phẩm, vật liệu..."
+              className="search-input"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+            />
+            {query && (
+              <button
+                type="button"
+                className="search-close"
+                onClick={() => setQuery('')}
+                aria-label="Xóa tìm kiếm"
+              >
+                <i className="fa-solid fa-xmark" aria-hidden="true"></i>
+              </button>
+            )}
+          </form>
+        </div>
+
         {/* --- Navbar --- */}
-        <nav className="navbar" data-navbar>
+        <nav className={`navbar ${isMobileMenuOpen ? 'active' : ''}`} data-navbar>
+          <button
+            className="nav-close-btn"
+            type="button"
+            aria-label="Đóng menu"
+            onClick={closeMobileMenu}
+          >
+            <i className="fa-solid fa-xmark" aria-hidden="true"></i>
+          </button>
           <ul className="navbar-list">
             <li className="navbar-item">
-              <NavLink to="/" className={navLinkClass}>
+              <NavLink to="/" className={navLinkClass} onClick={closeMobileMenu}>
                 Trang chủ
               </NavLink>
             </li>
             <li className="navbar-item">
-              <NavLink to="/about" className={navLinkClass}>
+              <NavLink to="/about" className={navLinkClass} onClick={closeMobileMenu}>
                 Về chúng tôi
               </NavLink>
             </li>
 
             {/* Products Dropdown - CSS Hover */}
             <li className="navbar-item dropdown">
-              <NavLink to="/products" className={navLinkClass}>
+              <NavLink to="/products" className={navLinkClass} onClick={closeMobileMenu}>
                 Sản phẩm
               </NavLink>
               <ul className="dropdown-menu">
-                <li><Link to="/products/gach-mosaic-xanh">Gạch Mosaic</Link></li>
-                <li><Link to="/products/tam-op-ecoterrazzo">Tấm Ốp Tường</Link></li>
-                <li><Link to="/products/khoi-nhua-hdpe">Nhựa Ép Khối</Link></li>
+                <li><Link to="/products/gach-mosaic-xanh" onClick={closeMobileMenu}>Gạch Mosaic</Link></li>
+                <li><Link to="/products/tam-op-ecoterrazzo" onClick={closeMobileMenu}>Tấm Ốp Tường</Link></li>
+                <li><Link to="/products/khoi-nhua-hdpe" onClick={closeMobileMenu}>Nhựa Ép Khối</Link></li>
               </ul>
             </li>
 
             <li className="navbar-item">
-              <NavLink to="/process" className={navLinkClass}>
+              <NavLink to="/process" className={navLinkClass} onClick={closeMobileMenu}>
                 Quy trình
               </NavLink>
             </li>
             <li className="navbar-item">
-              <NavLink to="/contact" className={navLinkClass}>
+              <NavLink to="/contact" className={navLinkClass} onClick={closeMobileMenu}>
                 Liên hệ
               </NavLink>
             </li>
@@ -115,8 +200,8 @@ export default function Header() {
             <li className="navbar-item dropdown">
               <span className="navbar-link">Cách thức hoạt động</span>
               <ul className="dropdown-menu">
-                <li><Link to="/how-it-works">Hướng dẫn</Link></li>
-                <li><Link to="/rewards">Điểm & Ưu đãi</Link></li>
+                <li><Link to="/how-it-works" onClick={closeMobileMenu}>Hướng dẫn</Link></li>
+                <li><Link to="/rewards" onClick={closeMobileMenu}>Điểm & Ưu đãi</Link></li>
               </ul>
             </li>
           </ul>
@@ -125,11 +210,13 @@ export default function Header() {
           <ul className="nav-action-list">
             {/* Search */}
             <li className="search-wrapper">
-              <div className="search-bar">
-                <i className="fa-solid fa-magnifying-glass search-icon" aria-hidden="true"></i>
+              <form className="search-bar" onSubmit={handleSearchSubmit}>
+                <button type="submit" className="search-icon-btn" aria-label="Tìm kiếm">
+                  <i className="fa-solid fa-magnifying-glass search-icon" aria-hidden="true"></i>
+                </button>
                 <input
                   type="text"
-                  placeholder="Tìm kiếm"
+                  placeholder="Tìm sản phẩm"
                   className="search-input"
                   value={query}
                   onChange={(event) => setQuery(event.target.value)}
@@ -144,12 +231,12 @@ export default function Header() {
                     <i className="fa-solid fa-xmark" aria-hidden="true"></i>
                   </button>
                 )}
-              </div>
+              </form>
             </li>
 
             {/* Cart Icon */}
             <li>
-              <Link to="/cart" className="nav-action-btn" style={{ position: 'relative', border: 'none', padding: '0.6rem' }}>
+              <Link to="/cart" className="nav-action-btn" style={{ position: 'relative', border: 'none', padding: '0.6rem' }} onClick={closeMobileMenu}>
                 <i className="fa-solid fa-cart-shopping" style={{ fontSize: '1.2rem' }}></i>
                 {cartCount > 0 && (
                   <span style={{
@@ -205,33 +292,33 @@ export default function Header() {
                       <ul className="user-dropdown-menu">
                         {role === 'admin' && (
                           <li>
-                            <Link to="/admin" onClick={() => setShowDropdown(false)}>
+                            <Link to="/admin" onClick={() => { setShowDropdown(false); closeMobileMenu(); }}>
                               <span>Trang quản trị</span>
                             </Link>
                           </li>
                         )}
                         <li>
-                          <Link to="/profile" onClick={() => setShowDropdown(false)}>
+                          <Link to="/profile" onClick={() => { setShowDropdown(false); closeMobileMenu(); }}>
                             <span>Hồ sơ của tôi</span>
                           </Link>
                         </li>
                         <li>
-                          <Link to="/rewards" onClick={() => setShowDropdown(false)}>
+                          <Link to="/rewards" onClick={() => { setShowDropdown(false); closeMobileMenu(); }}>
                             <span>Điểm thưởng</span>
                           </Link>
                         </li>
                         <li>
-                          <Link to="/history" onClick={() => setShowDropdown(false)}>
+                          <Link to="/history" onClick={() => { setShowDropdown(false); closeMobileMenu(); }}>
                             <span>Lịch sử hoạt động</span>
                           </Link>
                         </li>
                         <li>
-                          <Link to="/vouchers" onClick={() => setShowDropdown(false)}>
+                          <Link to="/vouchers" onClick={() => { setShowDropdown(false); closeMobileMenu(); }}>
                             <span>Voucher của tôi</span>
                           </Link>
                         </li>
                         <li>
-                          <Link to="/redeem" onClick={() => setShowDropdown(false)}>
+                          <Link to="/redeem" onClick={() => { setShowDropdown(false); closeMobileMenu(); }}>
                             <span>Đổi quà</span>
                           </Link>
                         </li>
@@ -246,7 +333,7 @@ export default function Header() {
                   )}
                 </div>
               ) : (
-                <NavLink to="/login" className="nav-action-btn">
+                <NavLink to="/login" className="nav-action-btn" onClick={closeMobileMenu}>
                   <i className="fa-solid fa-user" aria-hidden="true"></i>
                   <span className="nav-action-text">Đăng nhập</span>
                 </NavLink>

@@ -16,8 +16,19 @@ export async function uploadImageToCloudinary(file: File): Promise<string> {
   });
 
   if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`Upload Cloudinary thất bại: ${text}`);
+    let message = '';
+    try {
+      const data = await res.json();
+      message = data?.error?.message || JSON.stringify(data);
+    } catch {
+      message = await res.text();
+    }
+
+    if (/unsigned|upload preset|not found|not allowed/i.test(message)) {
+      message = `${message}. Kiểm tra Upload Preset ở chế độ Unsigned và đúng Cloud Name.`;
+    }
+
+    throw new Error(`Upload Cloudinary thất bại: ${message}`);
   }
 
   const data = await res.json();

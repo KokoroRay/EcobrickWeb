@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useRewards } from '../context/RewardsContext';
 import { getAssetPath } from '../utils/assets';
 
 export default function AdminNavbar() {
     const { logout, userAttributes, user } = useAuth();
+    const { pendingDonations } = useRewards();
     const navigate = useNavigate();
     const [showProfileMenu, setShowProfileMenu] = useState(false);
 
@@ -28,7 +30,19 @@ export default function AdminNavbar() {
                     <span className="logo-text">Ecobrick <span className="logo-badge">Admin</span></span>
                 </Link>
 
+                <div className="admin-top-search" role="search">
+                    <i className="fa-solid fa-magnifying-glass"></i>
+                    <input type="text" placeholder="Tìm module, người dùng, đơn quyên góp..." />
+                </div>
+
                 <div className="admin-user-controls">
+                    <div className="admin-status-chip">
+                        <i className="fa-solid fa-inbox"></i>
+                        {pendingDonations.length} chờ duyệt
+                    </div>
+                    <button className="admin-icon-btn" type="button" aria-label="Thông báo">
+                        <i className="fa-regular fa-bell"></i>
+                    </button>
                     <div
                         className="admin-profile-wrapper"
                         onClick={() => setShowProfileMenu(!showProfileMenu)}
