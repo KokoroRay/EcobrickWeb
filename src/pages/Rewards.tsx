@@ -7,7 +7,7 @@ import '../styles/dashboard.css';
 import '../styles/user-ui.css';
 
 export default function Rewards() {
-  const { points, config, history, addDonation } = useRewards();
+  const { points, totalKg, config, history, addDonation } = useRewards();
   const { user, userAttributes } = useAuth();
   const [kg, setKg] = useState<string>('1');
   const [note, setNote] = useState('');
@@ -57,10 +57,6 @@ export default function Rewards() {
       default: return null;
     }
   };
-
-  const totalKg = history
-    .filter(h => h.type === 'donate' && h.status === 'approved')
-    .reduce((acc, curr) => acc + (curr.kg || 0), 0);
 
   return (
     <div className="page content user-page rewards-page">
