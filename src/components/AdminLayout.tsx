@@ -22,6 +22,8 @@ export default function AdminLayout({ children, activeTab, onTabChange }: AdminL
             <AdminNavbar />
             <div className="admin-body">
                 <aside className="admin-idx-sidebar">
+                    <div className="admin-side-top">
+                        <div className="admin-side-title">Điều hướng</div>
                     <nav className="admin-side-nav">
                         {menuItems.map(item => (
                             <button
@@ -34,7 +36,14 @@ export default function AdminLayout({ children, activeTab, onTabChange }: AdminL
                             </button>
                         ))}
                     </nav>
-                    <div className="admin-version">v1.2.0 • Ecobrick Admin</div>
+                    </div>
+                    <div className="admin-side-foot">
+                        <div className="admin-side-tip">
+                            <i className="fa-solid fa-shield-heart"></i>
+                            Dữ liệu vận hành bảo mật qua AWS Cognito
+                        </div>
+                        <div className="admin-version">v1.2.0 • Ecobrick Admin</div>
+                    </div>
                 </aside>
                 <main className="admin-main-content">
                     {children}
