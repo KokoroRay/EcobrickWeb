@@ -17,11 +17,33 @@ export const LineChart = ({ data, title, color = "#20803F" }: { data: LineData[]
 
     const maxValue = Math.max(...data.map(d => d.value)) * 1.1 || 10;
 
-    const points = data.map((d, i) => {
+    const pointsArray = data.map((d, i) => {
         const x = (i / (data.length - 1 || 1)) * chartWidth + padding;
         const y = height - padding - (d.value / maxValue) * chartHeight;
-        return `${x},${y}`;
-    }).join(' ');
+        return { x, y };
+    });
+
+    const points = pointsArray.map((p) => `${p.x},${p.y}`).join(' ');
+
+    const smoothPath = (() => {
+        if (pointsArray.length <= 1) {
+            return `M ${pointsArray[0]?.x || padding} ${pointsArray[0]?.y || height - padding}`;
+        }
+
+        let path = `M ${pointsArray[0].x} ${pointsArray[0].y}`;
+        for (let i = 1; i < pointsArray.length - 1; i++) {
+            const curr = pointsArray[i];
+            const next = pointsArray[i + 1];
+            const xc = (curr.x + next.x) / 2;
+            const yc = (curr.y + next.y) / 2;
+            path += ` Q ${curr.x} ${curr.y}, ${xc} ${yc}`;
+        }
+
+        const last = pointsArray[pointsArray.length - 1];
+        const beforeLast = pointsArray[pointsArray.length - 2];
+        path += ` Q ${beforeLast.x} ${beforeLast.y}, ${last.x} ${last.y}`;
+        return path;
+    })();
 
     return (
         <div className="chart-container">
@@ -36,7 +58,7 @@ export const LineChart = ({ data, title, color = "#20803F" }: { data: LineData[]
                 <text x={padding - 10} y={height - padding} textAnchor="end" fontSize="10" fill="#94a3b8">0</text>
 
                 {/* Path */}
-                <polyline fill="none" stroke={color} strokeWidth="3" points={points} strokeLinecap="round" strokeLinejoin="round" />
+                <path d={smoothPath} fill="none" stroke={color} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
 
                 {/* Area Fill (Optional Gradient effect hack) */}
                 <polygon
@@ -47,8 +69,8 @@ export const LineChart = ({ data, title, color = "#20803F" }: { data: LineData[]
 
                 {/* Dots & Labels */}
                 {data.map((d, i) => {
-                    const x = (i / (data.length - 1 || 1)) * chartWidth + padding;
-                    const y = height - padding - (d.value / maxValue) * chartHeight;
+                    const x = pointsArray[i].x;
+                    const y = pointsArray[i].y;
                     return (
                         <g key={i} className="chart-tooltip-trigger">
                             <circle cx={x} cy={y} r="4" fill="white" stroke={color} strokeWidth="2" />

@@ -22,6 +22,7 @@ type RewardsState = {
   history: RewardHistoryEntry[];
   claimedVouchers: Voucher[];
   pendingDonations: AdminPendingDonation[];
+  adminDailyTimeline: Array<{ date: string; value: number }>;
 
   allUsers: UserRewardProfile[];
 
@@ -61,6 +62,7 @@ export function RewardsProvider({ children }: { children: ReactNode }) {
   const [availableVouchers, setAvailableVouchers] = useState<Voucher[]>([]);
   const [loadingVouchers, setLoadingVouchers] = useState(false);
   const [pendingDonations, setPendingDonations] = useState<AdminPendingDonation[]>([]);
+  const [adminDailyTimeline, setAdminDailyTimeline] = useState<Array<{ date: string; value: number }>>([]);
 
   const [config, setConfig] = useState<RewardsConfig>({
     pointsPerKg: 10,
@@ -283,6 +285,7 @@ export function RewardsProvider({ children }: { children: ReactNode }) {
 
       const data = await res.json();
       const donations = Array.isArray(data?.donations) ? data.donations : [];
+      const rawTimeline = Array.isArray(data?.timeline) ? data.timeline : [];
       const mapped: AdminPendingDonation[] = donations.map((d: any) => ({
         id: String(d.id || ''),
         userId: String(d.user_id || ''),
@@ -296,6 +299,12 @@ export function RewardsProvider({ children }: { children: ReactNode }) {
       }));
 
       setPendingDonations(mapped);
+      setAdminDailyTimeline(
+        rawTimeline.map((item: any) => ({
+          date: String(item.date || ''),
+          value: Number(item.value || 0),
+        }))
+      );
     } catch (e) {
       console.error('Fetch pending donations failed', e);
     }
@@ -545,7 +554,7 @@ export function RewardsProvider({ children }: { children: ReactNode }) {
 
   return (
     <RewardsContext.Provider value={{
-      points, totalKg, history, claimedVouchers, pendingDonations, allUsers: Object.values(usersDb),
+      points, totalKg, history, claimedVouchers, pendingDonations, adminDailyTimeline, allUsers: Object.values(usersDb),
       config, availableVouchers: availableVouchers,
       addDonation, redeemOption, updatePointsPerKg,
       addVoucher, deleteVoucher, editVoucher,

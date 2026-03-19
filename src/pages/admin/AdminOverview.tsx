@@ -3,7 +3,7 @@ import { useRewards } from '../../context/RewardsContext';
 import { LineChart, BarChart, PieChart } from '../../components/AdminCharts';
 
 export default function AdminOverview() {
-    const { allUsers, pendingDonations } = useRewards();
+    const { allUsers, pendingDonations, adminDailyTimeline } = useRewards();
 
     const totalUsers = allUsers.length;
     const activeContributors = allUsers.filter(u => u.totalKg > 0).length;
@@ -26,6 +26,13 @@ export default function AdminOverview() {
 
     // 1. Line Chart: Daily plastic volume over last 7 days
     const requestTrendData = useMemo(() => {
+        if (adminDailyTimeline.length > 0) {
+            return adminDailyTimeline.map((item) => ({
+                date: item.date,
+                value: Number((item.value || 0).toFixed(2)),
+            }));
+        }
+
         const donationsFromHistory = allUsers
             .flatMap((u) => u.history)
             .filter((h) => h.type === 'donate' && !!h.createdAt)
@@ -61,7 +68,7 @@ export default function AdminOverview() {
         });
 
         return timeline;
-    }, [allUsers, pendingDonations]);
+    }, [allUsers, pendingDonations, adminDailyTimeline]);
 
     // 2. Pie Chart: User quality segmentation
     const userSegmentData = useMemo(() => {
@@ -99,7 +106,7 @@ export default function AdminOverview() {
             grouped[key] = (grouped[key] || 0) + item.kg;
         });
 
-        return Object.entries(grouped)
+        const pendingData = Object.entries(grouped)
             .map(([label, value]) => ({
                 label,
                 value: Number(value.toFixed(1)),
@@ -107,7 +114,20 @@ export default function AdminOverview() {
             }))
             .sort((a, b) => b.value - a.value)
             .slice(0, 5);
-    }, [pendingDonations]);
+
+        if (pendingData.length > 0) {
+            return pendingData;
+        }
+
+        return [...allUsers]
+            .sort((a, b) => b.totalKg - a.totalKg)
+            .slice(0, 5)
+            .map((u) => ({
+                label: u.name,
+                value: Number((u.totalKg || 0).toFixed(1)),
+                color: '#9ccddb'
+            }));
+    }, [pendingDonations, allUsers]);
 
     return (
         <div className="overview-shell">
@@ -191,7 +211,7 @@ export default function AdminOverview() {
 
                 <div className="chart-card" style={{ gridColumn: '1 / -1' }}>
                     <BarChart
-                        title="Khối lượng chờ duyệt theo thành viên"
+                        title={pendingDonations.length > 0 ? 'Khối lượng chờ duyệt theo thành viên' : 'Khối lượng đóng góp theo thành viên'}
                         data={pendingByUserData}
                     />
                 </div>

@@ -8,8 +8,7 @@ type AdminLayoutProps = {
 };
 
 export default function AdminLayout({ children, activeTab, onTabChange }: AdminLayoutProps) {
-    const [isSidebarPinned, setIsSidebarPinned] = useState(false);
-    const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(true);
+    const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
     const menuItems = [
         { id: 'overview', icon: 'fa-chart-pie', label: 'Tổng quan' },
@@ -19,20 +18,8 @@ export default function AdminLayout({ children, activeTab, onTabChange }: AdminL
         { id: 'vouchers', icon: 'fa-ticket', label: 'Voucher & Cấu hình' },
     ];
 
-    const handleSidebarEnter = () => {
-        if (!isSidebarPinned) setIsSidebarCollapsed(false);
-    };
-
-    const handleSidebarLeave = () => {
-        if (!isSidebarPinned) setIsSidebarCollapsed(true);
-    };
-
-    const togglePinSidebar = () => {
-        setIsSidebarPinned((prev) => {
-            const next = !prev;
-            setIsSidebarCollapsed(!next);
-            return next;
-        });
+    const toggleSidebarState = () => {
+        setIsSidebarCollapsed((prev) => !prev);
     };
 
     return (
@@ -41,19 +28,17 @@ export default function AdminLayout({ children, activeTab, onTabChange }: AdminL
             <div className="admin-body">
                 <aside
                     className={`admin-idx-sidebar ${isSidebarCollapsed ? 'collapsed' : ''}`}
-                    onMouseEnter={handleSidebarEnter}
-                    onMouseLeave={handleSidebarLeave}
                 >
                     <div className="admin-side-top">
                         <div className="admin-side-title">Điều hướng</div>
                         <button
                             type="button"
                             className="admin-side-pin"
-                            aria-label={isSidebarPinned ? 'Bỏ ghim thanh điều hướng' : 'Ghim thanh điều hướng'}
-                            title={isSidebarPinned ? 'Bỏ ghim' : 'Ghim sidebar'}
-                            onClick={togglePinSidebar}
+                            aria-label={isSidebarCollapsed ? 'Mở rộng thanh điều hướng' : 'Thu gọn thanh điều hướng'}
+                            title={isSidebarCollapsed ? 'Mở rộng sidebar' : 'Thu gọn sidebar'}
+                            onClick={toggleSidebarState}
                         >
-                            <i className={`fa-solid ${isSidebarPinned ? 'fa-thumbtack' : 'fa-thumbtack fa-rotate-90'}`}></i>
+                            <i className={`fa-solid ${isSidebarCollapsed ? 'fa-angles-right' : 'fa-angles-left'}`}></i>
                         </button>
                     <nav className="admin-side-nav">
                         {menuItems.map(item => (
