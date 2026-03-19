@@ -129,6 +129,73 @@ export default function AdminOverview() {
             }));
     }, [pendingDonations, allUsers]);
 
+    // 5. Revenue metrics: Today and 7-day statistics
+    const revenueMetrics = useMemo(() => {
+        const today = new Date().toISOString().split('T')[0];
+        
+        // Collect all donation records from user histories
+        const allDonations = allUsers
+            .flatMap((u) => u.history)
+            .filter((h) => h.type === 'donate' && !!h.createdAt);
+
+        // Today's revenue (points issued today)
+        const todayDonations = allDonations.filter((h) => h.createdAt.split('T')[0] === today);
+        const todayPoints = todayDonations.reduce((sum, h) => sum + (h.points || 0), 0);
+        const todayKg = todayDonations.reduce((sum, h) => sum + (h.kg || 0), 0);
+
+        // Last 7 days revenue
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+        const sevenDaysDate = sevenDaysAgo.toISOString().split('T')[0];
+
+        const sevenDaysDonations = allDonations.filter((h) => {
+            const donateDate = h.createdAt.split('T')[0];
+            return donateDate >= sevenDaysDate && donateDate <= today;
+        });
+
+        const sevenDaysPoints = sevenDaysDonations.reduce((sum, h) => sum + (h.points || 0), 0);
+        const sevenDaysKg = sevenDaysDonations.reduce((sum, h) => sum + (h.kg || 0), 0);
+        const sevenDaysAvgPoints = sevenDaysDonations.length > 0 ? sevenDaysPoints / 7 : 0;
+
+        return {
+            todayPoints: Number(todayPoints.toFixed(0)),
+            todayKg: Number(todayKg.toFixed(2)),
+            sevenDaysPoints: Number(sevenDaysPoints.toFixed(0)),
+            sevenDaysKg: Number(sevenDaysKg.toFixed(2)),
+            sevenDaysAvgPoints: Number(sevenDaysAvgPoints.toFixed(0)),
+        };
+    }, [allUsers]);
+
+    // 6. Revenue over 7 days for daily comparison chart
+    const revenueChartData = useMemo(() => {
+        const today = new Date();
+        const timeline = Array.from({ length: 7 }, (_, index) => {
+            const date = new Date(today);
+            date.setDate(date.getDate() - (6 - index));
+            return date;
+        });
+
+        const revenueByDate: Record<string, number> = {};
+        
+        // Aggregate points by date from all users' history
+        allUsers.forEach((user) => {
+            user.history
+                .filter((h) => h.type === 'donate' && !!h.createdAt)
+                .forEach((h) => {
+                    const dateKey = h.createdAt.split('T')[0];
+                    revenueByDate[dateKey] = (revenueByDate[dateKey] || 0) + (h.points || 0);
+                });
+        });
+
+        return timeline.map((date) => {
+            const dateKey = date.toISOString().split('T')[0];
+            return {
+                date: dateKey,
+                value: revenueByDate[dateKey] || 0,
+            };
+        });
+    }, [allUsers]);
+
     return (
         <div className="overview-shell">
             <div className="admin-page-header">
@@ -184,6 +251,23 @@ export default function AdminOverview() {
                     <div className="insight-value">{pendingOrders === 0 ? 'Ổn định' : 'Cần xử lý'}</div>
                     <div className="insight-meta">{pendingOrders === 0 ? 'Không có tồn đọng' : `${pendingOrders} yêu cầu mở`}</div>
                 </article>
+                <article className="insight-card glass-card">
+                    <div className="insight-title">Doanh thu hôm nay</div>
+                    <div className="insight-value">{revenueMetrics.todayPoints.toLocaleString()}</div>
+                    <div className="insight-meta"><i className="fa-solid fa-star"></i> {revenueMetrics.todayKg.toFixed(2)} kg</div>
+                </article>
+                <article className="insight-card glass-card">
+                    <div className="insight-title">Doanh thu 7 ngày</div>
+                    <div className="insight-value">{revenueMetrics.sevenDaysPoints.toLocaleString()}</div>
+                    <div className="insight-meta">Trung bình {revenueMetrics.sevenDaysAvgPoints.toLocaleString()} điểm/ngày</div>
+                </article>
+                <article className="insight-card glass-card">
+                    <div className="insight-title">So sánh doanh thu</div>
+                    <div className="insight-value" style={{ fontSize: '1.35rem', color: revenueMetrics.todayPoints > revenueMetrics.sevenDaysAvgPoints ? '#20803F' : '#d85d5d' }}>
+                        {revenueMetrics.sevenDaysAvgPoints > 0 ? `${((revenueMetrics.todayPoints / revenueMetrics.sevenDaysAvgPoints) * 100).toFixed(0)}%` : 'N/A'}
+                    </div>
+                    <div className="insight-meta">So với trung bình 7 ngày</div>
+                </article>
             </div>
 
             <div className="chart-grid">
@@ -213,6 +297,14 @@ export default function AdminOverview() {
                     <BarChart
                         title={pendingDonations.length > 0 ? 'Khối lượng chờ duyệt theo thành viên' : 'Khối lượng đóng góp theo thành viên'}
                         data={pendingByUserData}
+                    />
+                </div>
+
+                <div className="chart-card" style={{ gridColumn: '1 / -1' }}>
+                    <LineChart
+                        title="Doanh thu điểm thưởng theo ngày (7 ngày gần nhất)"
+                        data={revenueChartData}
+                        color="#6fb8c9"
                     />
                 </div>
             </div>
