@@ -4,7 +4,11 @@ import { useAuth } from '../context/AuthContext';
 import { useRewards } from '../context/RewardsContext';
 import { getAssetPath } from '../utils/assets';
 
-export default function AdminNavbar() {
+interface AdminNavbarProps {
+    isVisible?: boolean;
+}
+
+export default function AdminNavbar({ isVisible = true }: AdminNavbarProps) {
     const { logout, userAttributes, user } = useAuth();
     const { pendingDonations } = useRewards();
     const navigate = useNavigate();
@@ -18,7 +22,7 @@ export default function AdminNavbar() {
     const displayName = userAttributes?.name || user?.username || 'Admin';
 
     return (
-        <header className="admin-header-nav">
+        <header className={`admin-header-nav ${!isVisible ? 'navbar-hidden' : ''}`}>
             <div className="admin-nav-container">
                 <Link to="/admin" className="admin-logo">
                     <img

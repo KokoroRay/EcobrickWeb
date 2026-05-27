@@ -1,4 +1,4 @@
-import { ReactNode, useState } from 'react';
+import { ReactNode, useState, useEffect, useRef } from 'react';
 import AdminNavbar from './AdminNavbar';
 
 type AdminLayoutProps = {
@@ -8,7 +8,11 @@ type AdminLayoutProps = {
 };
 
 export default function AdminLayout({ children, activeTab, onTabChange }: AdminLayoutProps) {
-    const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+    const [isSidebarPinned, setIsSidebarPinned] = useState(false);
+    const [isSidebarHovered, setIsSidebarHovered] = useState(false);
+    const [isNavbarVisible, setIsNavbarVisible] = useState(true);
+    const mainContentRef = useRef<HTMLDivElement>(null);
+    const lastScrollYRef = useRef(0);
 
     const menuItems = [
         { id: 'overview', icon: 'fa-chart-pie', label: 'Tổng quan' },
@@ -18,41 +22,65 @@ export default function AdminLayout({ children, activeTab, onTabChange }: AdminL
         { id: 'vouchers', icon: 'fa-ticket', label: 'Voucher & Cấu hình' },
     ];
 
-    const toggleSidebarState = () => {
-        setIsSidebarCollapsed((prev) => !prev);
-    };
+    const isSidebarCollapsed = !(isSidebarPinned || isSidebarHovered);
+
+    // Auto-hide header when scrolling down, re-show on upward scroll.
+    useEffect(() => {
+        const handleScroll = () => {
+            if (!mainContentRef.current) return;
+            const currentScrollY = mainContentRef.current.scrollTop;
+
+            if (currentScrollY > lastScrollYRef.current && currentScrollY > 96) {
+                setIsNavbarVisible(false);
+            } else {
+                setIsNavbarVisible(true);
+            }
+
+            lastScrollYRef.current = currentScrollY;
+        };
+
+        const mainContent = mainContentRef.current;
+        if (mainContent) {
+            mainContent.addEventListener('scroll', handleScroll);
+            return () => mainContent.removeEventListener('scroll', handleScroll);
+        }
+    }, []);
 
     return (
         <div className="admin-layout">
-            <AdminNavbar />
+            <AdminNavbar isVisible={isNavbarVisible} />
             <div className="admin-body">
                 <aside
                     className={`admin-idx-sidebar ${isSidebarCollapsed ? 'collapsed' : ''}`}
+                    onMouseEnter={() => setIsSidebarHovered(true)}
+                    onMouseLeave={() => setIsSidebarHovered(false)}
                 >
                     <div className="admin-side-top">
-                        <div className="admin-side-title">Điều hướng</div>
-                        <button
-                            type="button"
-                            className="admin-side-pin"
-                            aria-label={isSidebarCollapsed ? 'Mở rộng thanh điều hướng' : 'Thu gọn thanh điều hướng'}
-                            title={isSidebarCollapsed ? 'Mở rộng sidebar' : 'Thu gọn sidebar'}
-                            onClick={toggleSidebarState}
-                        >
-                            <i className={`fa-solid ${isSidebarCollapsed ? 'fa-angles-right' : 'fa-angles-left'}`}></i>
-                        </button>
-                    <nav className="admin-side-nav">
-                        {menuItems.map(item => (
+                        <div className="admin-side-head">
+                            <div className="admin-side-title">Điều hướng</div>
                             <button
-                                key={item.id}
-                                className={`admin-nav-link ${activeTab === item.id ? 'active' : ''}`}
-                                title={item.label}
-                                onClick={() => onTabChange(item.id)}
+                                type="button"
+                                className={`admin-side-dock ${isSidebarPinned ? 'active' : ''}`}
+                                onClick={() => setIsSidebarPinned((prev) => !prev)}
+                                aria-label={isSidebarPinned ? 'Bỏ ghim thanh điều hướng' : 'Ghim thanh điều hướng'}
+                                title={isSidebarPinned ? 'Bỏ ghim thanh điều hướng' : 'Ghim thanh điều hướng'}
                             >
-                                <i className={`fa-solid ${item.icon} nav-icon`}></i>
-                                <span className="nav-label">{item.label}</span>
+                                <i className="fa-solid fa-thumbtack"></i>
                             </button>
-                        ))}
-                    </nav>
+                        </div>
+                        <nav className="admin-side-nav">
+                            {menuItems.map(item => (
+                                <button
+                                    key={item.id}
+                                    className={`admin-nav-link ${activeTab === item.id ? 'active' : ''}`}
+                                    title={item.label}
+                                    onClick={() => onTabChange(item.id)}
+                                >
+                                    <i className={`fa-solid ${item.icon} nav-icon`}></i>
+                                    <span className="nav-label">{item.label}</span>
+                                </button>
+                            ))}
+                        </nav>
                     </div>
                     <div className="admin-side-foot">
                         <div className="admin-side-tip">
@@ -62,7 +90,7 @@ export default function AdminLayout({ children, activeTab, onTabChange }: AdminL
                         <div className="admin-version">v1.2.0 • Ecobrick Admin</div>
                     </div>
                 </aside>
-                <main className="admin-main-content">
+                <main className="admin-main-content" ref={mainContentRef}>
                     {children}
                 </main>
             </div>
